@@ -2,12 +2,17 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { LessonPlanRequest, LessonPlanParts, ChatMessage, RefineResponse } from '../types';
 import { LESSON_PLAN_EXAMPLES } from '../constants';
 
-// Sử dụng toán tử khẳng định non-null (!) để thông báo cho TypeScript rằng process.env.API_KEY được đảm bảo tồn tại.
-// Cấu hình `define` trong vite.config.ts sẽ thay thế biến này bằng giá trị thực tế lúc build.
-// Nếu VITE_API_KEY không được thiết lập trên Vercel, biến này sẽ là `undefined` khi chạy,
-// và thư viện GoogleGenAI sẽ báo lỗi, đây là hành vi mong muốn để phát hiện key bị thiếu.
-const apiKey = process.env.API_KEY!;
+// Lấy API key từ biến môi trường. Cấu hình Vite sẽ lo việc này cho trình duyệt.
+const apiKey = process.env.API_KEY;
 
+// Kiểm tra sự tồn tại của API key ở cấp cao nhất của module.
+// Điều này sẽ gây ra lỗi ngay khi module được import lần đầu nếu key bị thiếu.
+// Giúp ứng dụng báo lỗi sớm và rõ ràng, đây là một thực hành tốt.
+if (!apiKey) {
+  throw new Error("Thiếu Google Gemini API Key. Vui lòng thiết lập biến môi trường VITE_API_KEY.");
+}
+
+// Nhờ vào việc kiểm tra ở trên, TypeScript giờ đây biết rằng `apiKey` là một `string`.
 const ai = new GoogleGenAI({ apiKey });
 const model = 'gemini-2.5-flash';
 
