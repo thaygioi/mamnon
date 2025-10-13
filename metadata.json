@@ -1,0 +1,5 @@
+{
+  "name": "Trình tạo Giáo án Mầm non",
+  "description": "Một ứng dụng web sử dụng AI để giúp giáo viên mầm non nhanh chóng soạn thảo các kế hoạch bài dạy chi tiết và sáng tạo, dựa trên các chủ đề, lứa tuổi và loại hoạt động cụ thể.",
+  "requestFramePermissions": []
+}
