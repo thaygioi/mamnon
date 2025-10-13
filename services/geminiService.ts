@@ -11,6 +11,9 @@ export const generateLessonPlan = async (request: LessonPlanRequest, apiKey: str
   const ai = new GoogleGenAI({ apiKey });
 
   const example = LESSON_PLAN_EXAMPLES[0];
+  if (!example) {
+    throw new Error("Lỗi hệ thống: Không tìm thấy ví dụ mẫu để tạo prompt.");
+  }
   const exampleResponse = JSON.parse(example.response);
 
   const prompt = `Bạn là một chuyên gia soạn giáo án mầm non toàn diện và chi tiết. Nhiệm vụ của bạn là tạo ra một kế hoạch hoạt động cho cả ngày học, bao gồm 3 phần chính có liên kết logic với nhau: Hoạt động học, Hoạt động ngoài trời, và Hoạt động góc.
