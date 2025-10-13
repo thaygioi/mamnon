@@ -2,7 +2,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { LessonPlanRequest, LessonPlanParts, ChatMessage, RefineResponse } from '../types';
 import { LESSON_PLAN_EXAMPLES } from '../constants';
 
-// The API key must be obtained exclusively from the environment variable `process.env.API_KEY`.
+// The API key must be obtained exclusively from the environment variable for Vercel/Vite.
+// FIX: Updated to use process.env.API_KEY as per the coding guidelines.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const model = 'gemini-2.5-flash';
 

@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ACTIVITY_TYPES, AGE_GROUPS } from '../constants';
 import { LessonPlanRequest } from '../types';
 
 interface LessonPlanFormProps {
   onSubmit: (request: LessonPlanRequest) => void;
   isLoading: boolean;
+  initialData?: LessonPlanRequest | null;
 }
 
-export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoading }) => {
+export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoading, initialData }) => {
   const today = new Date().toISOString().split('T')[0];
   
   // Core Info
@@ -23,6 +24,19 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
   const [preparationDate, setPreparationDate] = useState(today);
   const [teachingDate, setTeachingDate] = useState(today);
 
+  useEffect(() => {
+    if (initialData) {
+        setActivityType(initialData.activityType);
+        setAgeGroup(initialData.ageGroup);
+        setTopic(initialData.topic);
+        setSubject(initialData.subject);
+        setDuration(initialData.duration);
+        setTeacherName(initialData.teacherName);
+        setSchoolName(initialData.schoolName);
+        setPreparationDate(initialData.preparationDate);
+        setTeachingDate(initialData.teachingDate);
+    }
+  }, [initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

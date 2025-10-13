@@ -1,11 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LessonPlanForm } from './components/LessonPlanForm';
 import { LessonPlanDisplay } from './components/LessonPlanDisplay';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
-import { LessonPlanRequest, LessonPlanParts, ChatMessage } from './types';
+import { LessonPlanRequest, LessonPlanParts, ChatMessage, SavedLessonPlan } from './types';
 import { generateLessonPlan, refineLessonPlan } from './services/geminiService';
+
+const SavedPlans: React.FC<{
+  plans: SavedLessonPlan[];
+  onLoad: (plan: SavedLessonPlan) => void;
+  onDelete: (id: number) => void;
+  currentPlanId: number | null;
+}> = ({ plans, onLoad, onDelete, currentPlanId }) => {
+  return (
+    <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 p-6 sm:p-8 rounded-2xl shadow-lg">
+      <h3 className="text-xl font-bold text-slate-800 mb-4">Giáo án đã lưu</h3>
+      {plans.length > 0 ? (
+        <ul className="space-y-3 max-h-60 overflow-y-auto pr-2">
+          {[...plans].reverse().map(plan => (
+            <li key={plan.id} className={`p-3 rounded-lg transition-all ${currentPlanId === plan.id ? 'bg-teal-100 border border-teal-200' : 'bg-slate-50 border'}`}>
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-semibold text-slate-700">{plan.request.subject}</p>
+                  <p className="text-xs text-slate-500">{plan.request.topic}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button onClick={() => onLoad(plan)} title="Tải giáo án" className="w-8 h-8 flex items-center justify-center rounded-md bg-slate-200 hover:bg-sky-500 hover:text-white text-slate-600 transition">
+                    <i className="fas fa-upload"></i>
+                  </button>
+                  <button onClick={() => onDelete(plan.id)} title="Xoá giáo án" className="w-8 h-8 flex items-center justify-center rounded-md bg-slate-200 hover:bg-red-500 hover:text-white text-slate-600 transition">
+                    <i className="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-slate-500">Chưa có giáo án nào được lưu.</p>
+      )}
+    </div>
+  );
+};
+
 
 const App: React.FC = () => {
   const [lessonPlan, setLessonPlan] = useState<LessonPlanParts | null>(null);
@@ -14,15 +52,51 @@ const App: React.FC = () => {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState<boolean>(false);
 
+  const [savedPlans, setSavedPlans] = useState<SavedLessonPlan[]>([]);
+  const [currentPlanId, setCurrentPlanId] = useState<number | null>(null);
+  const [currentRequest, setCurrentRequest] = useState<LessonPlanRequest | null>(null);
+
+  useEffect(() => {
+    try {
+        const storedPlans = localStorage.getItem('lessonPlans');
+        if (storedPlans) {
+            setSavedPlans(JSON.parse(storedPlans));
+        }
+    } catch (e) {
+        console.error("Failed to load plans from localStorage", e);
+    }
+  }, []);
+
+  const updateStoredPlans = (plans: SavedLessonPlan[]) => {
+      try {
+          localStorage.setItem('lessonPlans', JSON.stringify(plans));
+      } catch(e) {
+          console.error("Failed to save plans to localStorage", e);
+      }
+  };
 
   const handleGenerateLessonPlan = async (request: LessonPlanRequest) => {
     setIsLoading(true);
     setError(null);
     setLessonPlan(null);
-    setChatHistory([]); // Reset chat on new generation
+    setChatHistory([]);
     try {
       const result = await generateLessonPlan(request);
+      
+      const newPlan: SavedLessonPlan = {
+          id: Date.now(),
+          request: request,
+          parts: result,
+      };
+      
+      const updatedPlans = [...savedPlans, newPlan];
+      setSavedPlans(updatedPlans);
+      updateStoredPlans(updatedPlans);
+
       setLessonPlan(result);
+      setCurrentPlanId(newPlan.id);
+      setCurrentRequest(request);
+
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -36,7 +110,7 @@ const App: React.FC = () => {
   };
 
   const handleSendMessage = async (message: string) => {
-    if (!lessonPlan) return;
+    if (!lessonPlan || currentPlanId === null) return;
 
     const newUserMessage: ChatMessage = { role: 'user', content: message };
     const updatedHistory = [...chatHistory, newUserMessage];
@@ -46,6 +120,13 @@ const App: React.FC = () => {
 
     try {
       const result = await refineLessonPlan(lessonPlan, updatedHistory, message);
+
+      const updatedPlans = savedPlans.map(p =>
+          p.id === currentPlanId ? { ...p, parts: result.lessonPlan } : p
+      );
+      setSavedPlans(updatedPlans);
+      updateStoredPlans(updatedPlans);
+      
       setLessonPlan(result.lessonPlan);
       const modelResponse: ChatMessage = { role: 'model', content: result.chatResponse };
       setChatHistory(prev => [...prev, modelResponse]);
@@ -55,21 +136,59 @@ const App: React.FC = () => {
       } else {
         setError("Đã có lỗi không xác định xảy ra.");
       }
-      // Revert user message on error
       setChatHistory(chatHistory);
     } finally {
       setIsChatLoading(false);
     }
   }
 
+  const handleLoadPlan = (plan: SavedLessonPlan) => {
+      setLessonPlan(plan.parts);
+      setCurrentRequest(plan.request);
+      setCurrentPlanId(plan.id);
+      setChatHistory([]);
+      setError(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  const handleDeletePlan = (id: number) => {
+      if (window.confirm("Bạn có chắc chắn muốn xoá giáo án này không?")) {
+          const updatedPlans = savedPlans.filter(p => p.id !== id);
+          setSavedPlans(updatedPlans);
+          updateStoredPlans(updatedPlans);
+          
+          if (id === currentPlanId) {
+              setLessonPlan(null);
+              setCurrentPlanId(null);
+              setCurrentRequest(null);
+              setChatHistory([]);
+          }
+      }
+  };
+
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-teal-50 via-cyan-50 to-sky-100">
       <Header />
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
-          <div className="relative lg:col-span-1">
-             {isLoading && <LoadingSpinner />}
-            <LessonPlanForm onSubmit={handleGenerateLessonPlan} isLoading={isLoading} />
+          <div className="lg:col-span-1 space-y-8">
+            <div className="relative">
+              {isLoading && <LoadingSpinner />}
+              <LessonPlanForm 
+                onSubmit={handleGenerateLessonPlan} 
+                isLoading={isLoading}
+                initialData={currentRequest}
+              />
+            </div>
+             {savedPlans.length > 0 && (
+              <SavedPlans 
+                  plans={savedPlans} 
+                  onLoad={handleLoadPlan} 
+                  onDelete={handleDeletePlan}
+                  currentPlanId={currentPlanId}
+              />
+            )}
           </div>
           <div className="lg:col-span-2 h-full">
             {error && (

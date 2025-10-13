@@ -26,3 +26,9 @@ export interface RefineResponse {
   lessonPlan: LessonPlanParts;
   chatResponse: string;
 }
+
+export interface SavedLessonPlan {
+  id: number; // Using timestamp for simplicity
+  request: LessonPlanRequest;
+  parts: LessonPlanParts;
+}
