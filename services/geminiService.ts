@@ -3,8 +3,12 @@ import { LessonPlanRequest, LessonPlanParts, ChatMessage, RefineResponse } from 
 import { LESSON_PLAN_EXAMPLES } from '../constants';
 
 // The API key must be obtained exclusively from the environment variable for Vercel/Vite.
-// FIX: Updated to use process.env.API_KEY as per the coding guidelines.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = process.env.API_KEY;
+if (!apiKey) {
+  throw new Error("VITE_API_KEY is not defined in environment variables. Please set it in your Vercel project settings.");
+}
+
+const ai = new GoogleGenAI({ apiKey });
 const model = 'gemini-2.5-flash';
 
 export const generateLessonPlan = async (request: LessonPlanRequest): Promise<LessonPlanParts> => {

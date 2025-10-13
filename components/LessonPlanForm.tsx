@@ -8,6 +8,52 @@ interface LessonPlanFormProps {
   initialData?: LessonPlanRequest | null;
 }
 
+// --- Sub-components with explicit props for type safety ---
+
+interface InputFieldProps {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  required?: boolean;
+  icon: string;
+}
+
+const InputField: React.FC<InputFieldProps> = ({ id, label, value, onChange, placeholder, required = false, icon }) => (
+  <div>
+    <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1">
+      <i className={`fas ${icon} mr-2 text-slate-400`}></i>{label}
+    </label>
+    <input
+      type="text" id={id} value={value} onChange={onChange}
+      placeholder={placeholder} required={required}
+      className="block w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+    />
+  </div>
+);
+
+interface DateFieldProps {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  icon: string;
+}
+
+const DateField: React.FC<DateFieldProps> = ({ id, label, value, onChange, icon }) => (
+  <div>
+    <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1">
+      <i className={`fas ${icon} mr-2 text-slate-400`}></i>{label}
+    </label>
+    <input
+      type="date" id={id} value={value} onChange={onChange}
+      className="block w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+    />
+  </div>
+);
+
+
 export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoading, initialData }) => {
   const today = new Date().toISOString().split('T')[0];
   
@@ -57,32 +103,6 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
     });
   };
 
-  const InputField = ({ id, label, value, onChange, placeholder, required = false, icon }) => (
-    <div>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1">
-        <i className={`fas ${icon} mr-2 text-slate-400`}></i>{label}
-      </label>
-      <input
-        type="text" id={id} value={value} onChange={onChange}
-        placeholder={placeholder} required={required}
-        className="block w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
-      />
-    </div>
-  );
-
-   const DateField = ({ id, label, value, onChange, icon }) => (
-    <div>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1">
-        <i className={`fas ${icon} mr-2 text-slate-400`}></i>{label}
-      </label>
-      <input
-        type="date" id={id} value={value} onChange={onChange}
-        className="block w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
-      />
-    </div>
-  );
-
-
   return (
     <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 p-6 sm:p-8 rounded-2xl shadow-lg h-full transition-all duration-300">
       <div className="mb-6">
@@ -97,7 +117,7 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
             <label htmlFor="activityType" className="block text-sm font-medium text-slate-700 mb-1">
               <i className="fas fa-puzzle-piece mr-2 text-teal-500"></i>Lĩnh vực
             </label>
-            <select id="activityType" value={activityType} onChange={(e) => setActivityType(e.target.value)}
+            <select id="activityType" value={activityType} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setActivityType(e.target.value)}
               className="block w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
               {ACTIVITY_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
             </select>
@@ -106,7 +126,7 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
             <label htmlFor="ageGroup" className="block text-sm font-medium text-slate-700 mb-1">
               <i className="fas fa-child mr-2 text-cyan-500"></i>Độ tuổi
             </label>
-            <select id="ageGroup" value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)}
+            <select id="ageGroup" value={ageGroup} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAgeGroup(e.target.value)}
               className="block w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition">
               {AGE_GROUPS.map((age) => <option key={age} value={age}>{age}</option>)}
             </select>
