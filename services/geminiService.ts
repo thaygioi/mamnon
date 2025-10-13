@@ -2,11 +2,11 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { LessonPlanRequest, LessonPlanParts, ChatMessage, RefineResponse } from '../types';
 import { LESSON_PLAN_EXAMPLES } from '../constants';
 
-// The API key must be obtained exclusively from the environment variable for Vercel/Vite.
-const apiKey = process.env.API_KEY;
-if (!apiKey) {
-  throw new Error("VITE_API_KEY is not defined in environment variables. Please set it in your Vercel project settings.");
-}
+// Sử dụng toán tử khẳng định non-null (!) để thông báo cho TypeScript rằng process.env.API_KEY được đảm bảo tồn tại.
+// Cấu hình `define` trong vite.config.ts sẽ thay thế biến này bằng giá trị thực tế lúc build.
+// Nếu VITE_API_KEY không được thiết lập trên Vercel, biến này sẽ là `undefined` khi chạy,
+// và thư viện GoogleGenAI sẽ báo lỗi, đây là hành vi mong muốn để phát hiện key bị thiếu.
+const apiKey = process.env.API_KEY!;
 
 const ai = new GoogleGenAI({ apiKey });
 const model = 'gemini-2.5-flash';
