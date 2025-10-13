@@ -2,21 +2,14 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { LessonPlanRequest, LessonPlanParts, ChatMessage, RefineResponse } from '../types';
 import { LESSON_PLAN_EXAMPLES } from '../constants';
 
-// Lấy API key từ biến môi trường. Cấu hình Vite sẽ lo việc này cho trình duyệt.
-const apiKey = process.env.API_KEY;
-
-// Kiểm tra sự tồn tại của API key ở cấp cao nhất của module.
-// Điều này sẽ gây ra lỗi ngay khi module được import lần đầu nếu key bị thiếu.
-// Giúp ứng dụng báo lỗi sớm và rõ ràng, đây là một thực hành tốt.
-if (!apiKey) {
-  throw new Error("Thiếu Google Gemini API Key. Vui lòng thiết lập biến môi trường VITE_API_KEY.");
-}
-
-// Nhờ vào việc kiểm tra ở trên, TypeScript giờ đây biết rằng `apiKey` là một `string`.
-const ai = new GoogleGenAI({ apiKey });
 const model = 'gemini-2.5-flash';
 
-export const generateLessonPlan = async (request: LessonPlanRequest): Promise<LessonPlanParts> => {
+export const generateLessonPlan = async (request: LessonPlanRequest, apiKey: string): Promise<LessonPlanParts> => {
+  if (!apiKey) {
+    throw new Error("API Key không được cung cấp.");
+  }
+  const ai = new GoogleGenAI({ apiKey });
+
   const example = LESSON_PLAN_EXAMPLES[0];
   const exampleResponse = JSON.parse(example.response);
 
@@ -93,7 +86,7 @@ Hãy đảm bảo bạn trả về một đối tượng JSON hợp lệ, không
     if (error instanceof SyntaxError) {
        throw new Error("AI đã trả về dữ liệu không hợp lệ. Vui lòng thử lại.");
     }
-    throw new Error("Không thể tạo giáo án. Vui lòng thử lại sau.");
+    throw new Error("Không thể tạo giáo án. Vui lòng kiểm tra lại API Key hoặc thử lại sau.");
   }
 };
 
@@ -101,8 +94,13 @@ Hãy đảm bảo bạn trả về một đối tượng JSON hợp lệ, không
 export const refineLessonPlan = async (
   currentPlan: LessonPlanParts,
   history: ChatMessage[],
-  newMessage: string
+  newMessage: string,
+  apiKey: string,
 ): Promise<RefineResponse> => {
+   if (!apiKey) {
+    throw new Error("API Key không được cung cấp.");
+  }
+  const ai = new GoogleGenAI({ apiKey });
   
   const historyString = history.map(msg => `${msg.role}: ${msg.content}`).join('\n');
 
@@ -165,6 +163,6 @@ Bây giờ, hãy cập nhật giáo án và tạo phản hồi. Trả về một
     if (error instanceof SyntaxError) {
       throw new Error("AI đã trả về dữ liệu không hợp lệ. Vui lòng thử lại.");
     }
-    throw new Error("Không thể chỉnh sửa giáo án. Vui lòng thử lại sau.");
+    throw new Error("Không thể chỉnh sửa giáo án. Vui lòng kiểm tra lại API Key hoặc thử lại sau.");
   }
 };

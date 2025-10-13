@@ -4,6 +4,7 @@ import { LessonPlanDisplay } from './components/LessonPlanDisplay';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
+import { ApiKeyModal } from './components/ApiKeyModal';
 import { LessonPlanRequest, LessonPlanParts, ChatMessage, SavedLessonPlan } from './types';
 import { generateLessonPlan, refineLessonPlan } from './services/geminiService';
 
@@ -56,16 +57,34 @@ const App: React.FC = () => {
   const [currentPlanId, setCurrentPlanId] = useState<number | null>(null);
   const [currentRequest, setCurrentRequest] = useState<LessonPlanRequest | null>(null);
 
+  const [apiKey, setApiKey] = useState<string>('');
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+
   useEffect(() => {
     try {
         const storedPlans = localStorage.getItem('lessonPlans');
         if (storedPlans) {
             setSavedPlans(JSON.parse(storedPlans));
         }
+        const storedApiKey = localStorage.getItem('geminiApiKey');
+        if (storedApiKey) {
+            setApiKey(storedApiKey);
+        }
     } catch (e) {
-        console.error("Failed to load plans from localStorage", e);
+        console.error("Failed to load data from localStorage", e);
     }
   }, []);
+  
+  const handleSaveApiKey = (key: string) => {
+    setApiKey(key);
+    try {
+      localStorage.setItem('geminiApiKey', key);
+    } catch(e) {
+      console.error("Failed to save API key to localStorage", e);
+      setError("Không thể lưu API Key vào trình duyệt.");
+    }
+    setIsApiKeyModalOpen(false);
+  };
 
   const updateStoredPlans = (plans: SavedLessonPlan[]) => {
       try {
@@ -76,12 +95,17 @@ const App: React.FC = () => {
   };
 
   const handleGenerateLessonPlan = async (request: LessonPlanRequest) => {
+    if (!apiKey) {
+      setError("Vui lòng nhập API Key của bạn để tạo giáo án.");
+      setIsApiKeyModalOpen(true);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     setLessonPlan(null);
     setChatHistory([]);
     try {
-      const result = await generateLessonPlan(request);
+      const result = await generateLessonPlan(request, apiKey);
       
       const newPlan: SavedLessonPlan = {
           id: Date.now(),
@@ -110,7 +134,7 @@ const App: React.FC = () => {
   };
 
   const handleSendMessage = async (message: string) => {
-    if (!lessonPlan || currentPlanId === null) return;
+    if (!lessonPlan || currentPlanId === null || !apiKey) return;
 
     const newUserMessage: ChatMessage = { role: 'user', content: message };
     const updatedHistory = [...chatHistory, newUserMessage];
@@ -119,7 +143,7 @@ const App: React.FC = () => {
     setError(null);
 
     try {
-      const result = await refineLessonPlan(lessonPlan, updatedHistory, message);
+      const result = await refineLessonPlan(lessonPlan, updatedHistory, message, apiKey);
 
       const updatedPlans = savedPlans.map(p =>
           p.id === currentPlanId ? { ...p, parts: result.lessonPlan } : p
@@ -169,7 +193,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-teal-50 via-cyan-50 to-sky-100">
-      <Header />
+      <Header onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)} />
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
           <div className="lg:col-span-1 space-y-8">
@@ -207,6 +231,12 @@ const App: React.FC = () => {
         </div>
       </main>
       <Footer />
+      <ApiKeyModal 
+        isOpen={isApiKeyModalOpen}
+        onClose={() => setIsApiKeyModalOpen(false)}
+        onSave={handleSaveApiKey}
+        currentKey={apiKey}
+      />
     </div>
   );
 };
