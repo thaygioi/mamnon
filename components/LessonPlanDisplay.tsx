@@ -15,6 +15,12 @@ interface ActivityRow {
   childActions: string[];
 }
 
+// Helper function to convert simple markdown bold to HTML
+const markdownToHtml = (text: string) => {
+  if (!text) return '';
+  return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+};
+
 const parseColumnContent = (text: string): ActivityRow[] => {
     const rows: ActivityRow[] = [];
     if (!text) return rows;
@@ -25,17 +31,20 @@ const parseColumnContent = (text: string): ActivityRow[] => {
 
     for (const line of lines) {
         const trimmedLine = line.trim();
+        // Check for activity titles (e.g., **1. Khởi động:**)
         if (trimmedLine.startsWith('**') && (trimmedLine.includes('. ') || trimmedLine.match(/^\*\*\d+:/))) {
             if (currentRow) {
                 rows.push(currentRow);
             }
-            currentRow = { title: trimmedLine.replace(/\*\*/g, ''), teacherActions: [], childActions: [] };
+            // Store the raw line with markdown as the title
+            currentRow = { title: trimmedLine, teacherActions: [], childActions: [] };
             currentSection = null;
         } else if (trimmedLine.startsWith('**Hoạt động của cô:**')) {
             currentSection = 'teacher';
         } else if (trimmedLine.startsWith('**Hoạt động của trẻ:**')) {
             currentSection = 'child';
         } else if (currentRow && trimmedLine) {
+            // Store the raw line with markdown for teacher/child actions
             if (currentSection === 'teacher') {
                 currentRow.teacherActions.push(trimmedLine);
             } else if (currentSection === 'child') {
@@ -62,7 +71,7 @@ const FormattedContent: React.FC<{ text: string; format: 'no-columns' | 'with-co
          return (
             <div className="prose prose-slate max-w-none">
                 {text.split('\n').map((line, index) => (
-                    <p key={index} dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '&nbsp;' }} />
+                    <p key={index} dangerouslySetInnerHTML={{ __html: markdownToHtml(line) || '&nbsp;' }} />
                 ))}
             </div>
         );
@@ -74,9 +83,9 @@ const FormattedContent: React.FC<{ text: string; format: 'no-columns' | 'with-co
 
   const renderSimpleFormat = (content: string) => {
     return content.split('\n').map((line, index) => {
-        const sanitizedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        const sanitizedLine = markdownToHtml(line);
         if (line.trim().startsWith('-')) {
-          return <p key={index} className="pl-6 relative"><span className="absolute left-2 top-2 text-xs">&bull;</span><span dangerouslySetInnerHTML={{ __html: sanitizedLine.substring(1) }} /></p>;
+          return <p key={index} className="pl-6 relative"><span className="absolute left-2 top-2 text-xs">&bull;</span><span dangerouslySetInnerHTML={{ __html: sanitizedLine.substring(1).trim() }} /></p>;
         }
         return <p key={index} dangerouslySetInnerHTML={{ __html: sanitizedLine || '&nbsp;' }} />;
     });
@@ -101,17 +110,17 @@ const FormattedContent: React.FC<{ text: string; format: 'no-columns' | 'with-co
                     <React.Fragment key={rowIndex}>
                         {row.title && (
                             <tr className="bg-slate-50">
-                                <td colSpan={2} className="border border-slate-300 px-4 py-2 font-semibold">
-                                    {row.title}
+                                <td colSpan={2} className="border border-slate-300 px-4 py-2"
+                                  dangerouslySetInnerHTML={{ __html: markdownToHtml(row.title) }}>
                                 </td>
                             </tr>
                         )}
                         <tr>
                             <td className="border border-slate-300 px-4 py-2 align-top">
-                                {row.teacherActions.map((action, i) => <p key={i}>{action}</p>)}
+                                {row.teacherActions.map((action, i) => <p key={i} dangerouslySetInnerHTML={{ __html: markdownToHtml(action) }} />)}
                             </td>
                             <td className="border border-slate-300 px-4 py-2 align-top">
-                                {row.childActions.map((action, i) => <p key={i}>{action}</p>)}
+                                {row.childActions.map((action, i) => <p key={i} dangerouslySetInnerHTML={{ __html: markdownToHtml(action) }} />)}
                             </td>
                         </tr>
                     </React.Fragment>
@@ -160,11 +169,11 @@ const formatTextForDoc = (text: string, format: 'no-columns' | 'with-columns'): 
         
         parseColumnContent(activitiesContent).forEach(row => {
             if (row.title) {
-                tableHtml += `<tr style="background-color: #f9f9f9;"><td colspan="2" style="border: 1px solid #ccc; padding: 8px; font-weight: bold;">${row.title}</td></tr>`;
+                tableHtml += `<tr style="background-color: #f9f9f9;"><td colspan="2" style="border: 1px solid #ccc; padding: 8px; font-weight: bold;">${markdownToHtml(row.title)}</td></tr>`;
             }
             tableHtml += `<tr>
-                <td style="border: 1px solid #ccc; padding: 8px; vertical-align: top;">${row.teacherActions.map(a => `<p>${a}</p>`).join('')}</td>
-                <td style="border: 1px solid #ccc; padding: 8px; vertical-align: top;">${row.childActions.map(a => `<p>${a}</p>`).join('')}</td>
+                <td style="border: 1px solid #ccc; padding: 8px; vertical-align: top;">${row.teacherActions.map(a => `<p>${markdownToHtml(a)}</p>`).join('')}</td>
+                <td style="border: 1px solid #ccc; padding: 8px; vertical-align: top;">${row.childActions.map(a => `<p>${markdownToHtml(a)}</p>`).join('')}</td>
             </tr>`;
         });
 

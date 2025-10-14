@@ -53,23 +53,50 @@ const DateField: React.FC<DateFieldProps> = ({ id, label, value, onChange, icon 
   </div>
 );
 
+const getDurationForAgeGroup = (ageGroup: string): string => {
+  switch (ageGroup) {
+    case 'Trẻ 3-6 tháng':
+    case 'Trẻ 6-12 tháng':
+      return '5-10 phút';
+    case 'Trẻ 12-18 tháng':
+    case 'Trẻ 18-24 tháng':
+      return '10-15 phút';
+    case 'Trẻ 24-36 tháng':
+      return '15-20 phút';
+    case 'Trẻ 3-4 tuổi':
+      return '20-25 phút';
+    case 'Trẻ 4-6 tuổi':
+      return '30-35 phút';
+    case 'Trẻ 4-5 tuổi':
+    case 'Trẻ 5-6 tuổi':
+      return '30-35 phút';
+    default:
+      return '25-30 phút'; // Default fallback
+  }
+};
+
 
 export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoading, initialData }) => {
   const today = new Date().toISOString().split('T')[0];
+  const defaultAgeGroup = AGE_GROUPS[6]; // 'Trẻ 4-5 tuổi'
   
   // Core Info
   const [activityType, setActivityType] = useState(ACTIVITY_TYPES[0]);
-  const [ageGroup, setAgeGroup] = useState(AGE_GROUPS[6]); // Defaults to 'Trẻ 4-5 tuổi'
+  const [ageGroup, setAgeGroup] = useState(defaultAgeGroup);
   const [topic, setTopic] = useState(''); // Chủ đề
   const [subject, setSubject] = useState(''); // Đề tài
   const [format, setFormat] = useState<'no-columns' | 'with-columns'>('no-columns');
 
   // Detailed Info
-  const [duration, setDuration] = useState('25-30 phút'); // Fixed duration
+  const [duration, setDuration] = useState(getDurationForAgeGroup(defaultAgeGroup));
   const [teacherName, setTeacherName] = useState('');
   const [schoolName, setSchoolName] = useState('');
   const [preparationDate, setPreparationDate] = useState(today);
   const [teachingDate, setTeachingDate] = useState(today);
+
+  useEffect(() => {
+    setDuration(getDurationForAgeGroup(ageGroup));
+  }, [ageGroup]);
 
   useEffect(() => {
     if (initialData) {
@@ -77,7 +104,7 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
         setAgeGroup(initialData.ageGroup);
         setTopic(initialData.topic);
         setSubject(initialData.subject);
-        setDuration(initialData.duration); 
+        // Duration is now derived from ageGroup, so we don't set it from initialData
         setTeacherName(initialData.teacherName);
         setSchoolName(initialData.schoolName);
         setPreparationDate(initialData.preparationDate);
@@ -157,7 +184,7 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
               rows={4}
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="Ví dụ: Hát: “Em đi qua ngã tư đường phố” - Nghe hát: Trống cơm."
+              placeholder="Ví dụ: Hát: “Em đi qua ngã tư đường phố” - Nghe hát: Trống cơm"
               required
               className="block w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
             />
