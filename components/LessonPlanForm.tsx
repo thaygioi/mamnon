@@ -59,14 +59,14 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
   
   // Core Info
   const [activityType, setActivityType] = useState(ACTIVITY_TYPES[0]);
-  const [ageGroup, setAgeGroup] = useState(AGE_GROUPS[2]);
+  const [ageGroup, setAgeGroup] = useState(AGE_GROUPS[6]); // Defaults to 'Trẻ 4-5 tuổi'
   const [topic, setTopic] = useState(''); // Chủ đề
   const [subject, setSubject] = useState(''); // Đề tài
 
   // Detailed Info
-  const [duration, setDuration] = useState('30 - 35 phút');
-  const [teacherName, setTeacherName] = useState('Nguyễn Thị Phương Thảo');
-  const [schoolName, setSchoolName] = useState('Trường Mầm non Đề Thám');
+  const [duration, setDuration] = useState('25-30 phút'); // Fixed duration
+  const [teacherName, setTeacherName] = useState('');
+  const [schoolName, setSchoolName] = useState('');
   const [preparationDate, setPreparationDate] = useState(today);
   const [teachingDate, setTeachingDate] = useState(today);
 
@@ -76,7 +76,7 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
         setAgeGroup(initialData.ageGroup);
         setTopic(initialData.topic);
         setSubject(initialData.subject);
-        setDuration(initialData.duration);
+        setDuration(initialData.duration); 
         setTeacherName(initialData.teacherName);
         setSchoolName(initialData.schoolName);
         setPreparationDate(initialData.preparationDate);
@@ -132,13 +132,40 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
             </select>
           </div>
           <InputField id="topic" label="Chủ đề" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Ví dụ: Ngành nghề" required icon="fa-tags" />
-          <InputField id="subject" label="Đề tài" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Ví dụ: Bật liên tục qua các vòng" required icon="fa-lightbulb" />
+          
+          <div>
+            <label htmlFor="subject" className="block text-sm font-medium text-slate-700 mb-1">
+              <i className="fas fa-lightbulb mr-2 text-slate-400"></i>Đề tài
+            </label>
+            <textarea
+              id="subject"
+              rows={4}
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Ví dụ: Hát: “Em đi qua ngã tư đường phố” - Nghe hát: Trống cơm."
+              required
+              className="block w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+            />
+          </div>
         </fieldset>
 
         {/* --- Detailed Info --- */}
         <fieldset className="space-y-4">
           <legend className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Thông tin chi tiết</legend>
-          <InputField id="duration" label="Thời gian" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Ví dụ: 30-35 phút" required icon="fa-clock" />
+          
+          <div>
+            <label htmlFor="duration" className="block text-sm font-medium text-slate-700 mb-1">
+                <i className="fas fa-clock mr-2 text-slate-400"></i>Thời gian
+            </label>
+            <input
+                type="text"
+                id="duration"
+                value={duration}
+                disabled
+                className="block w-full px-3 py-2 bg-slate-100/80 border border-slate-300 rounded-md shadow-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition cursor-not-allowed"
+            />
+          </div>
+
           <InputField id="teacherName" label="Người dạy" value={teacherName} onChange={(e) => setTeacherName(e.target.value)} placeholder="Ví dụ: Nguyễn Thị A" required icon="fa-user" />
           <InputField id="schoolName" label="Đơn vị" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} placeholder="Ví dụ: Trường Mầm non Họa Mi" required icon="fa-school" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

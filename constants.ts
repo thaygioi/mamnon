@@ -1,17 +1,18 @@
 import { LessonPlanRequest } from './types';
 
 export const ACTIVITY_TYPES = [
-  'Giáo dục Âm nhạc',
-  'Giáo dục Thể chất',
-  'Hoạt động Tạo hình',
-  'Làm quen với Toán',
-  'Khám phá Khoa học',
-  'Khám phá Xã hội',
-  'Làm quen Văn học',
-  'Làm quen chữ viết',
+  'Phát triển thể chất',
+  'Phát triển nhận thức',
+  'Phát triển ngôn ngữ',
+  'Phát triển thẩm mỹ',
+  'Phát triển tình cảm và kỹ năng xã hội',
 ];
 
 export const AGE_GROUPS = [
+  'Trẻ 3-6 tháng',
+  'Trẻ 6-12 tháng',
+  'Trẻ 12-18 tháng',
+  'Trẻ 18-24 tháng',
   'Trẻ 24-36 tháng',
   'Trẻ 3-4 tuổi',
   'Trẻ 4-5 tuổi',

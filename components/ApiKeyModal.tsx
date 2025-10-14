@@ -5,9 +5,10 @@ interface ApiKeyModalProps {
   onClose: () => void;
   onSave: (key: string) => void;
   currentKey: string;
+  isInitialSetup?: boolean;
 }
 
-export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onSave, currentKey }) => {
+export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onSave, currentKey, isInitialSetup = false }) => {
   const [apiKey, setApiKey] = useState('');
 
   useEffect(() => {
@@ -25,24 +26,25 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onSav
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity" onClick={onClose}>
+    <div 
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity" 
+        onClick={isInitialSetup ? undefined : onClose}
+    >
       <div 
         className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md m-4 transform transition-all" 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-start mb-4">
             <h2 className="text-2xl font-bold text-slate-800">Cài đặt API Key</h2>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
-                <i className="fas fa-times fa-lg"></i>
-            </button>
+            {!isInitialSetup && (
+                <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i className="fas fa-times fa-lg"></i>
+                </button>
+            )}
         </div>
-        <p className="text-slate-600 mb-4 text-sm">
-          Vui lòng nhập Google Gemini API Key của bạn để sử dụng ứng dụng. Key của bạn sẽ được lưu trữ an toàn ngay trên trình duyệt này.
+        <p className="text-slate-600 mb-6 text-sm">
+          Vui lòng nhập API key.
         </p>
-        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-sm text-cyan-600 hover:underline mb-6 block">
-            <i className="fas fa-external-link-alt mr-1"></i>
-            Lấy API Key của bạn từ Google AI Studio
-        </a>
         
         <div>
           <label htmlFor="apiKeyInput" className="block text-sm font-medium text-slate-700 mb-1">
@@ -64,7 +66,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onSav
             className="w-full sm:w-auto py-2 px-6 border border-transparent rounded-md shadow-lg text-sm font-medium text-white bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all duration-300"
           >
             <i className="fas fa-save mr-2"></i>
-            Lưu và Đóng
+            {isInitialSetup ? 'Lưu và Bắt đầu' : 'Lưu và Đóng'}
           </button>
         </div>
       </div>

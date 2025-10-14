@@ -69,6 +69,8 @@ const App: React.FC = () => {
         const storedApiKey = localStorage.getItem('geminiApiKey');
         if (storedApiKey) {
             setApiKey(storedApiKey);
+        } else {
+            setIsApiKeyModalOpen(true); // Open modal if no key is found
         }
     } catch (e) {
         console.error("Failed to load data from localStorage", e);
@@ -236,6 +238,7 @@ const App: React.FC = () => {
         onClose={() => setIsApiKeyModalOpen(false)}
         onSave={handleSaveApiKey}
         currentKey={apiKey}
+        isInitialSetup={!apiKey}
       />
     </div>
   );

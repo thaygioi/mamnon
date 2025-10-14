@@ -8,14 +8,6 @@ interface LessonPlanDisplayProps {
   isChatLoading: boolean;
 }
 
-type Tab = 'learning' | 'outdoor' | 'corner';
-
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'learning', label: 'Hoạt động học', icon: 'fa-chalkboard-user' },
-  { id: 'outdoor', label: 'Hoạt động ngoài trời', icon: 'fa-sun' },
-  { id: 'corner', label: 'Hoạt động góc', icon: 'fa-shapes' },
-];
-
 const FormattedContent: React.FC<{ text: string }> = ({ text }) => {
   if (!text) {
     return null;
@@ -36,45 +28,31 @@ const FormattedContent: React.FC<{ text: string }> = ({ text }) => {
           return <p key={index} className="text-center font-bold uppercase text-lg my-2 text-slate-900">{trimmedLine}</p>;
         }
         if (trimmedLine.startsWith('LĨNH VỰC PHÁT TRIỂN')) {
-          return <p key={index} className="text-center font-bold uppercase text-base mb-4 text-slate-800">{trimmedLine}</p>;
+            return <p key={index} className="text-center font-bold uppercase text-base mb-4 text-slate-800">{trimmedLine}</p>;
         }
-        if (/^\*\*[IVXLCDM]+\..+\*\*$/.test(trimmedLine)) {
-          return <p key={index} className="font-bold text-base mt-4 mb-2 text-slate-900">{trimmedLine.replace(/\*\*/g, '')}</p>;
+        if (/^[IVXLCDM]+\..+$/.test(trimmedLine)) {
+            return <p key={index} className="font-bold text-base mt-4 mb-2 text-slate-900">{trimmedLine}</p>;
         }
-        if (/^\*\*\d+\..+\*\*$/.test(trimmedLine)) {
-          return <p key={index} className="font-bold mt-3 mb-1 text-slate-800">{trimmedLine.replace(/\*\*/g, '')}</p>;
-        }
-        if (trimmedLine.startsWith('**') && trimmedLine.includes('**:')) {
-          const parts = trimmedLine.split('**:');
-          const key = parts[0].replace(/\*\*/g, '');
-          const value = parts.slice(1).join('**:');
-          return (
-            <p key={index} className="mb-1">
-              <span className="font-semibold">{key}:</span>
-              {value}
-            </p>
-          );
+        if (/^\d+\..+$/.test(trimmedLine) || trimmedLine.toLowerCase().startsWith('hoạt động')) {
+            return <p key={index} className="font-bold mt-3 mb-1 text-slate-800">{trimmedLine}</p>;
         }
         if (trimmedLine.startsWith('- ')) {
-           const content = trimmedLine.substring(2);
-           const partsWithBold = content.split(/\*\*(.*?)\*\*/g);
            return (
              <p key={index} className="pl-6 relative">
                <span className="absolute left-1.5 top-2 text-xs">&bull;</span>
-                 {partsWithBold.map((part, i) =>
-                    i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : part
-                 )}
+               {trimmedLine.substring(2)}
              </p>
            );
         }
         
-        const partsWithBold = trimmedLine.split(/\*\*(.*?)\*\*/g);
-        if (partsWithBold.length > 1) {
-            return (
+        const colonIndex = trimmedLine.indexOf(':');
+        if (colonIndex > 0 && colonIndex < 40 && !trimmedLine.substring(0, colonIndex).includes(' ')) {
+             const key = trimmedLine.substring(0, colonIndex + 1);
+             const value = trimmedLine.substring(colonIndex + 1);
+             return (
                 <p key={index} className="mb-1">
-                    {partsWithBold.map((part, i) =>
-                        i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : part
-                    )}
+                    <span className="font-semibold">{key}</span>
+                    {value}
                 </p>
             );
         }
@@ -106,27 +84,24 @@ const formatTextForDoc = (text: string): string => {
       if (trimmedLine.startsWith('LĨNH VỰC PHÁT TRIỂN')) {
         return `<p style="${styles.h2}">${trimmedLine}</p>`;
       }
-      if (/^\*\*[IVXLCDM]+\..+\*\*$/.test(trimmedLine)) {
-        return `<p style="${styles.h3}">${trimmedLine.replace(/\*\*/g, '')}</p>`;
+      if (/^[IVXLCDM]+\..+$/.test(trimmedLine)) {
+        return `<p style="${styles.h3}">${trimmedLine}</p>`;
       }
-      if (/^\*\*\d+\..+\*\*$/.test(trimmedLine)) {
-        return `<p style="${styles.h4}">${trimmedLine.replace(/\*\*/g, '')}</p>`;
-      }
-      if (trimmedLine.startsWith('**') && trimmedLine.includes('**:')) {
-        const parts = trimmedLine.split('**:');
-        const key = parts[0].replace(/\*\*/g, '');
-        const value = parts.slice(1).join('**:');
-        const boldedValue = value.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        return `<p style="${styles.p}"><strong>${key}:</strong>${boldedValue}</p>`;
+      if (/^\d+\..+$/.test(trimmedLine) || trimmedLine.toLowerCase().startsWith('hoạt động')) {
+        return `<p style="${styles.h4}">${trimmedLine}</p>`;
       }
       if (trimmedLine.startsWith('- ')) {
-        const content = trimmedLine.substring(2);
-        const boldedContent = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        return `<p style="${styles.li}">&bull; ${boldedContent}</p>`;
+        return `<p style="${styles.li}">&bull; ${trimmedLine.substring(2)}</p>`;
       }
       
-      const styledLine = trimmedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      return `<p style="${styles.p}">${styledLine}</p>`;
+      const colonIndex = trimmedLine.indexOf(':');
+      if (colonIndex > 0 && colonIndex < 40 && !trimmedLine.substring(0, colonIndex).includes(' ')) {
+        const key = trimmedLine.substring(0, colonIndex + 1);
+        const value = trimmedLine.substring(colonIndex + 1);
+        return `<p style="${styles.p}"><strong>${key}</strong>${value}</p>`;
+      }
+
+      return `<p style="${styles.p}">${trimmedLine}</p>`;
     }).join('');
 };
 
@@ -201,24 +176,17 @@ const ChatInterface: React.FC<{
 
 
 export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlanParts, chatHistory, onSendMessage, isChatLoading }) => {
-  const [activeTab, setActiveTab] = useState<Tab>('learning');
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
 
   useEffect(() => {
     if (lessonPlanParts) {
-      setActiveTab('learning');
       setCopyStatus('idle');
     }
   }, [lessonPlanParts]);
 
   const handleCopy = () => {
-    if (lessonPlanParts) {
-      let contentToCopy = '';
-      if (activeTab === 'learning') contentToCopy = lessonPlanParts.learningActivity;
-      else if (activeTab === 'outdoor') contentToCopy = lessonPlanParts.outdoorActivity;
-      else if (activeTab === 'corner') contentToCopy = lessonPlanParts.cornerActivity;
-
-      navigator.clipboard.writeText(contentToCopy).then(() => {
+    if (lessonPlanParts?.lessonPlanContent) {
+      navigator.clipboard.writeText(lessonPlanParts.lessonPlanContent).then(() => {
         setCopyStatus('copied');
         setTimeout(() => setCopyStatus('idle'), 2000);
       });
@@ -226,7 +194,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlan
   };
   
   const handleDownload = () => {
-    if (!lessonPlanParts) return;
+    if (!lessonPlanParts?.lessonPlanContent) return;
 
     const fullHtml = `
       <!DOCTYPE html>
@@ -239,11 +207,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlan
         </style>
       </head>
       <body>
-        ${formatTextForDoc(lessonPlanParts.learningActivity)}
-        <div style="page-break-after: always;"></div>
-        ${formatTextForDoc(lessonPlanParts.outdoorActivity)}
-        <div style="page-break-after: always;"></div>
-        ${formatTextForDoc(lessonPlanParts.cornerActivity)}
+        ${formatTextForDoc(lessonPlanParts.lessonPlanContent)}
       </body>
       </html>
     `;
@@ -253,10 +217,10 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlan
     });
     
     let fileName = 'GiaoAn.doc';
-    const lines = lessonPlanParts.learningActivity.split('\n');
-    const subjectLine = lines.find(line => line.includes('**Đề tài**:'));
+    const lines = lessonPlanParts.lessonPlanContent.split('\n');
+    const subjectLine = lines.find(line => line.includes('Đề tài:'));
     if (subjectLine) {
-        const subject = subjectLine.split('**:')[1].trim().replace(/\s+/g, '_');
+        const subject = subjectLine.split(':')[1].trim().replace(/\s+/g, '_');
         fileName = `GiaoAn_${subject}.doc`;
     }
 
@@ -277,19 +241,10 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlan
             <i className="fas fa-book-open-reader"></i>
         </div>
         <h3 className="text-2xl font-semibold text-slate-700">Giáo án của bạn sẽ xuất hiện ở đây</h3>
-        <p className="mt-2 max-w-md">Kế hoạch chi tiết cho 3 hoạt động cốt lõi sẽ được AI tạo ra và hiển thị tại đây.</p>
+        <p className="mt-2 max-w-md">Kế hoạch chi tiết cho các hoạt động sẽ được AI tạo ra và hiển thị tại đây.</p>
       </div>
     );
   }
-  
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'learning': return lessonPlanParts.learningActivity;
-      case 'outdoor': return lessonPlanParts.outdoorActivity;
-      case 'corner': return lessonPlanParts.cornerActivity;
-      default: return '';
-    }
-  };
 
   return (
     <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-lg h-full flex flex-col">
@@ -302,7 +257,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlan
               className="px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-700"
             >
               <i className={`fas ${copyStatus === 'copied' ? 'fa-check' : 'fa-copy'}`}></i>
-              <span>{copyStatus === 'copied' ? 'Đã chép!' : 'Sao chép tab'}</span>
+              <span>{copyStatus === 'copied' ? 'Đã chép!' : 'Sao chép'}</span>
             </button>
             <button
               onClick={handleDownload}
@@ -313,28 +268,10 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlan
             </button>
         </div>
       </div>
-      
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200/80">
-        {TABS.map(tab => (
-            <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold transition-all duration-200 focus:outline-none ${
-                    activeTab === tab.id
-                    ? 'border-b-2 border-teal-500 text-teal-600'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-            >
-                <i className={`fas ${tab.icon}`}></i>
-                <span>{tab.label}</span>
-            </button>
-        ))}
-      </div>
 
       {/* Content */}
-      <div className="p-6 sm:p-8 overflow-y-auto flex-grow" style={{maxHeight: '60vh'}}>
-        <FormattedContent text={renderContent()} />
+      <div className="p-6 sm:p-8 overflow-y-auto flex-grow" style={{maxHeight: '70vh'}}>
+        <FormattedContent text={lessonPlanParts.lessonPlanContent} />
       </div>
 
       {/* Chat Interface */}
