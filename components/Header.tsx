@@ -7,7 +7,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onOpenApiKeyModal }) => {
   return (
     <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-sm border-b border-slate-200/50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:p-8">
         <div className="flex items-center justify-between h-20">
           <div className="flex items-center space-x-4">
              <div className="text-4xl text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-cyan-500">

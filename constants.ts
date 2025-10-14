@@ -36,10 +36,11 @@ export const LESSON_PLAN_EXAMPLES: LessonPlanExample[] = [
       teachingDate: '05/10/2023',
       teacherName: 'Nguyễn Thị An',
       schoolName: 'Trường Mầm non Ánh Dương',
+      format: 'no-columns',
     },
     response: JSON.stringify({
-      learningActivity: `GIÁO ÁN
-LĨNH VỰC PHÁT TRIỂN: KHÁM PHÁ KHOA HỌC
+      lessonPlanContent: `**GIÁO ÁN**
+**LĨNH VỰC PHÁT TRIỂN: KHÁM PHÁ KHOA HỌC**
 
 **Chủ đề**: Nước và các hiện tượng tự nhiên
 **Đề tài**: Sự kỳ diệu của nước
@@ -89,65 +90,6 @@ LĨNH VỰC PHÁT TRIỂN: KHÁM PHÁ KHOA HỌC
 
 **IV. KẾT THÚC (1-2 phút)**
 - Nhận xét, khen ngợi và giáo dục trẻ tiết kiệm nước.
-`,
-      outdoorActivity: `GỢI Ý HOẠT ĐỘNG NGOÀI TRỜI
-
-**Liên kết chủ đề**: Sự kỳ diệu của nước
-**Mục đích**: Củng cố kiến thức về các trạng thái của nước và vai trò của ánh nắng mặt trời.
-
----
-
-**1. Quan sát có mục đích: Tìm nước ở đâu?**
-- **Mục tiêu**: Giúp trẻ nhận ra nước có ở khắp mọi nơi trong môi trường xung quanh.
-- **Cách tiến hành**:
-- Cô dẫn trẻ đi dạo quanh sân trường.
-- Đặt câu hỏi gợi mở: "Chúng ta có thể tìm thấy nước ở đâu nhỉ?" (vũng nước, lá cây sau khi tưới, vòi nước, bể cá...).
-- Cho trẻ chỉ và gọi tên những nơi có nước.
-
-**2. Trò chơi vận động: "Trời nắng, trời mưa"**
-- **Mục tiêu**: Rèn luyện phản xạ nhanh nhẹn, tạo không khí vui vẻ.
-- **Cách tiến hành**:
-- Cô hô "Trời mưa", trẻ chạy tìm chỗ trú.
-- Cô hô "Trời nắng", trẻ đi lại tự do.
-- Cô hô "Mưa rào", trẻ chạy nhanh hơn.
-
-**3. Thí nghiệm nhỏ: Đá tan nhanh hơn ở đâu?**
-- **Mục tiêu**: Giúp trẻ nhận biết tác động của nhiệt độ (ánh nắng) lên trạng thái của nước.
-- **Cách tiến hành**:
-- Chuẩn bị 2 đĩa đá viên.
-- Đặt 1 đĩa ngoài nắng và 1 đĩa trong bóng râm.
-- Cho trẻ quan sát và so sánh xem đĩa đá nào tan nhanh hơn và giải thích tại sao.
-`,
-      cornerActivity: `GỢI Ý HOẠT ĐỘNG GÓC
-
-**Liên kết chủ đề**: Sự kỳ diệu của nước
-**Mục đích**: Mở rộng và cho trẻ tự do sáng tạo dựa trên kiến thức đã học.
-
----
-
-**1. Góc Xây dựng / Lắp ráp:**
-- **Nội dung**: Xây dựng "Công viên nước" hoặc "Hệ thống dẫn nước".
-- **Nguyên vật liệu**: Các khối lego, chai lọ tái chế, ống hút, máng nước nhỏ.
-- **Mục tiêu**: Rèn luyện kỹ năng lắp ráp, tư duy không gian và hợp tác nhóm.
-
-**2. Góc Nghệ thuật / Tạo hình:**
-- **Nội dung**:
-- Vẽ tranh về mưa, về biển.
-- Làm thuyền giấy và thả vào chậu nước.
-- Thổi màu nước qua ống hút để tạo "cơn mưa màu sắc".
-- **Nguyên vật liệu**: Giấy, bút màu, màu nước, ống hút, chậu nước.
-- **Mục tiêu**: Phát triển khả năng sáng tạo, thẩm mỹ và sự khéo léo của đôi tay.
-
-**3. Góc Khoa học / Thiên nhiên:**
-- **Nội dung**:
-- Thí nghiệm "Vật chìm, vật nổi": Trẻ thả các đồ vật khác nhau vào nước và quan sát.
-- Chăm sóc cây xanh: Trẻ tự tay dùng bình nhỏ để tưới nước cho cây trong góc thiên nhiên.
-- **Nguyên vật liệu**: Chậu nước, các vật dụng (lá cây, sỏi, miếng xốp, thìa sắt...), bình tưới cây.
-- **Mục tiêu**: Kích thích tính tò mò, khả năng phán đoán và hình thành tình yêu thiên nhiên.
-
-**4. Góc Sách / Văn học:**
-- **Nội dung**: Xem các loại sách, tranh ảnh về chủ đề nước (sông, hồ, biển, các loài vật sống dưới nước).
-- **Mục tiêu**: Phát triển văn hóa đọc, làm quen với hình ảnh và từ ngữ mới.
 `
     }),
   }

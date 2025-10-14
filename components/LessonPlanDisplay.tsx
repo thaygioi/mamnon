@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { LessonPlanParts, ChatMessage } from '../types';
 
 interface LessonPlanDisplayProps {
@@ -6,103 +6,175 @@ interface LessonPlanDisplayProps {
   chatHistory: ChatMessage[];
   onSendMessage: (message: string) => void;
   isChatLoading: boolean;
+  format: 'no-columns' | 'with-columns';
 }
 
-const FormattedContent: React.FC<{ text: string }> = ({ text }) => {
-  if (!text) {
-    return null;
-  }
-  
-  return (
-    <div className="text-slate-800 leading-relaxed text-base font-sans">
-      {text.split('\n').map((line, index) => {
+interface ActivityRow {
+  title: string;
+  teacherActions: string[];
+  childActions: string[];
+}
+
+const parseColumnContent = (text: string): ActivityRow[] => {
+    const rows: ActivityRow[] = [];
+    if (!text) return rows;
+
+    const lines = text.split('\n');
+    let currentRow: ActivityRow | null = null;
+    let currentSection: 'teacher' | 'child' | null = null;
+
+    for (const line of lines) {
         const trimmedLine = line.trim();
+        if (trimmedLine.startsWith('**') && (trimmedLine.includes('. ') || trimmedLine.match(/^\*\*\d+:/))) {
+            if (currentRow) {
+                rows.push(currentRow);
+            }
+            currentRow = { title: trimmedLine.replace(/\*\*/g, ''), teacherActions: [], childActions: [] };
+            currentSection = null;
+        } else if (trimmedLine.startsWith('**Hoạt động của cô:**')) {
+            currentSection = 'teacher';
+        } else if (trimmedLine.startsWith('**Hoạt động của trẻ:**')) {
+            currentSection = 'child';
+        } else if (currentRow && trimmedLine) {
+            if (currentSection === 'teacher') {
+                currentRow.teacherActions.push(trimmedLine);
+            } else if (currentSection === 'child') {
+                currentRow.childActions.push(trimmedLine);
+            }
+        }
+    }
 
-        if (trimmedLine === '') {
-          return <div key={index} className="h-4" />;
-        }
-        if (trimmedLine === '---') {
-          return <hr key={index} className="my-4 border-slate-300" />;
-        }
-        if (trimmedLine === 'GIÁO ÁN' || trimmedLine.startsWith('GỢI Ý HOẠT ĐỘNG')) {
-          return <p key={index} className="text-center font-bold uppercase text-lg my-2 text-slate-900">{trimmedLine}</p>;
-        }
-        if (trimmedLine.startsWith('LĨNH VỰC PHÁT TRIỂN')) {
-            return <p key={index} className="text-center font-bold uppercase text-base mb-4 text-slate-800">{trimmedLine}</p>;
-        }
-        if (/^[IVXLCDM]+\..+$/.test(trimmedLine)) {
-            return <p key={index} className="font-bold text-base mt-4 mb-2 text-slate-900">{trimmedLine}</p>;
-        }
-        if (/^\d+\..+$/.test(trimmedLine) || trimmedLine.toLowerCase().startsWith('hoạt động')) {
-            return <p key={index} className="font-bold mt-3 mb-1 text-slate-800">{trimmedLine}</p>;
-        }
-        if (trimmedLine.startsWith('- ')) {
-           return (
-             <p key={index} className="pl-6 relative">
-               <span className="absolute left-1.5 top-2 text-xs">&bull;</span>
-               {trimmedLine.substring(2)}
-             </p>
-           );
-        }
-        
-        const colonIndex = trimmedLine.indexOf(':');
-        if (colonIndex > 0 && colonIndex < 40 && !trimmedLine.substring(0, colonIndex).includes(' ')) {
-             const key = trimmedLine.substring(0, colonIndex + 1);
-             const value = trimmedLine.substring(colonIndex + 1);
-             return (
-                <p key={index} className="mb-1">
-                    <span className="font-semibold">{key}</span>
-                    {value}
-                </p>
-            );
-        }
+    if (currentRow) {
+        rows.push(currentRow);
+    }
+    return rows;
+}
 
-        return <p key={index} className="mb-1">{trimmedLine}</p>;
-      })}
+
+const FormattedContent: React.FC<{ text: string; format: 'no-columns' | 'with-columns' }> = ({ text, format }) => {
+  if (!text) return null;
+
+  const sections = text.split('**III. TỔ CHỨC HOẠT ĐỘNG**');
+  if (sections.length < 2) {
+     sections[1] = text.split('**III. CÁCH TIẾN HÀNH**')[1];
+     if (!sections[1]) {
+        // Fallback if no activity section is found
+         return (
+            <div className="prose prose-slate max-w-none">
+                {text.split('\n').map((line, index) => (
+                    <p key={index} dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '&nbsp;' }} />
+                ))}
+            </div>
+        );
+     }
+  }
+
+  const preActivitiesContent = sections[0];
+  const activitiesContent = sections[1] || '';
+
+  const renderSimpleFormat = (content: string) => {
+    return content.split('\n').map((line, index) => {
+        const sanitizedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        if (line.trim().startsWith('-')) {
+          return <p key={index} className="pl-6 relative"><span className="absolute left-2 top-2 text-xs">&bull;</span><span dangerouslySetInnerHTML={{ __html: sanitizedLine.substring(1) }} /></p>;
+        }
+        return <p key={index} dangerouslySetInnerHTML={{ __html: sanitizedLine || '&nbsp;' }} />;
+    });
+  }
+
+  return (
+    <div className="prose prose-slate max-w-none leading-relaxed">
+      {renderSimpleFormat(preActivitiesContent)}
+
+      <p><strong>III. TỔ CHỨC HOẠT ĐỘNG</strong></p>
+
+      {format === 'with-columns' ? (
+        <table className="w-full border-collapse border border-slate-400">
+            <thead>
+                <tr className="bg-slate-100">
+                    <th className="w-1/2 border border-slate-300 px-4 py-2 text-left font-bold text-slate-800">Hoạt động của cô</th>
+                    <th className="w-1/2 border border-slate-300 px-4 py-2 text-left font-bold text-slate-800">Hoạt động của trẻ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {parseColumnContent(activitiesContent).map((row, rowIndex) => (
+                    <React.Fragment key={rowIndex}>
+                        {row.title && (
+                            <tr className="bg-slate-50">
+                                <td colSpan={2} className="border border-slate-300 px-4 py-2 font-semibold">
+                                    {row.title}
+                                </td>
+                            </tr>
+                        )}
+                        <tr>
+                            <td className="border border-slate-300 px-4 py-2 align-top">
+                                {row.teacherActions.map((action, i) => <p key={i}>{action}</p>)}
+                            </td>
+                            <td className="border border-slate-300 px-4 py-2 align-top">
+                                {row.childActions.map((action, i) => <p key={i}>{action}</p>)}
+                            </td>
+                        </tr>
+                    </React.Fragment>
+                ))}
+            </tbody>
+        </table>
+      ) : (
+        renderSimpleFormat(activitiesContent)
+      )}
     </div>
   );
 };
 
-const formatTextForDoc = (text: string): string => {
+const formatTextForDoc = (text: string, format: 'no-columns' | 'with-columns'): string => {
     if (!text) return '';
-    const styles = {
-      h1: 'text-align: center; font-size: 18pt; font-weight: bold; text-transform: uppercase; margin: 1em 0;',
-      h2: 'text-align: center; font-size: 16pt; font-weight: bold; text-transform: uppercase; margin-bottom: 1em;',
-      h3: 'font-size: 15pt; font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em;',
-      h4: 'font-size: 14pt; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em;',
-      p: 'font-size: 14pt; margin-bottom: 0.5em; line-height: 1.5;',
-      li: 'font-size: 14pt; margin-left: 40px; margin-bottom: 0.5em; line-height: 1.5;',
+    
+    let htmlContent = '';
+    const sections = text.split('**III. TỔ CHỨC HOẠT ĐỘNG**');
+     if (sections.length < 2) {
+        sections[0] = text.split('**III. CÁCH TIẾN HÀNH**')[0];
+        sections[1] = text.split('**III. CÁCH TIẾN HÀNH**')[1];
+    }
+    const preActivitiesContent = sections[0];
+    const activitiesContent = sections[1] || '';
+
+    const simpleFormatToHtml = (content: string) => {
+        return content.split('\n').map(line => {
+            if (line.trim() === '') return '<br>';
+            let styledLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            return `<p style="margin-bottom: 0.5em; font-size: 14pt; line-height: 1.5;">${styledLine}</p>`;
+        }).join('');
     };
+    
+    htmlContent += simpleFormatToHtml(preActivitiesContent);
+    htmlContent += `<p style="margin-bottom: 0.5em; font-size: 14pt; line-height: 1.5;"><strong>III. TỔ CHỨC HOẠT ĐỘNG</strong></p>`;
 
-    return text.split('\n').map(line => {
-      const trimmedLine = line.trim();
-      if (trimmedLine === '') return '<br>';
-      if (trimmedLine === '---') return '<hr style="margin: 1em 0;" />';
-      if (trimmedLine === 'GIÁO ÁN' || trimmedLine.startsWith('GỢI Ý HOẠT ĐỘNG')) {
-        return `<p style="${styles.h1}">${trimmedLine}</p>`;
-      }
-      if (trimmedLine.startsWith('LĨNH VỰC PHÁT TRIỂN')) {
-        return `<p style="${styles.h2}">${trimmedLine}</p>`;
-      }
-      if (/^[IVXLCDM]+\..+$/.test(trimmedLine)) {
-        return `<p style="${styles.h3}">${trimmedLine}</p>`;
-      }
-      if (/^\d+\..+$/.test(trimmedLine) || trimmedLine.toLowerCase().startsWith('hoạt động')) {
-        return `<p style="${styles.h4}">${trimmedLine}</p>`;
-      }
-      if (trimmedLine.startsWith('- ')) {
-        return `<p style="${styles.li}">&bull; ${trimmedLine.substring(2)}</p>`;
-      }
-      
-      const colonIndex = trimmedLine.indexOf(':');
-      if (colonIndex > 0 && colonIndex < 40 && !trimmedLine.substring(0, colonIndex).includes(' ')) {
-        const key = trimmedLine.substring(0, colonIndex + 1);
-        const value = trimmedLine.substring(colonIndex + 1);
-        return `<p style="${styles.p}"><strong>${key}</strong>${value}</p>`;
-      }
+    if (format === 'with-columns' && activitiesContent) {
+        let tableHtml = `<table style="width:100%; border-collapse: collapse; border: 1px solid #ccc;">
+            <thead>
+                <tr style="background-color: #f2f2f2;">
+                    <th style="width:50%; border: 1px solid #ccc; padding: 8px; text-align: left;">Hoạt động của cô</th>
+                    <th style="width:50%; border: 1px solid #ccc; padding: 8px; text-align: left;">Hoạt động của trẻ</th>
+                </tr>
+            </thead>
+            <tbody>`;
+        
+        parseColumnContent(activitiesContent).forEach(row => {
+            if (row.title) {
+                tableHtml += `<tr style="background-color: #f9f9f9;"><td colspan="2" style="border: 1px solid #ccc; padding: 8px; font-weight: bold;">${row.title}</td></tr>`;
+            }
+            tableHtml += `<tr>
+                <td style="border: 1px solid #ccc; padding: 8px; vertical-align: top;">${row.teacherActions.map(a => `<p>${a}</p>`).join('')}</td>
+                <td style="border: 1px solid #ccc; padding: 8px; vertical-align: top;">${row.childActions.map(a => `<p>${a}</p>`).join('')}</td>
+            </tr>`;
+        });
 
-      return `<p style="${styles.p}">${trimmedLine}</p>`;
-    }).join('');
+        tableHtml += `</tbody></table>`;
+        htmlContent += tableHtml;
+    } else {
+        htmlContent += simpleFormatToHtml(activitiesContent);
+    }
+    
+    return htmlContent;
 };
 
 
@@ -128,7 +200,7 @@ const ChatInterface: React.FC<{
 
   return (
     <div className="border-t border-slate-200/80 p-4 bg-slate-50/50">
-      <div className="h-48 overflow-y-auto space-y-4 pr-2">
+      <div className="h-64 overflow-y-auto space-y-4 pr-2">
         {history.map((msg, index) => (
           <div key={index} className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
              {msg.role === 'model' && <i className="fas fa-robot text-teal-500 text-lg mb-1"></i>}
@@ -175,9 +247,9 @@ const ChatInterface: React.FC<{
 }
 
 
-export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlanParts, chatHistory, onSendMessage, isChatLoading }) => {
+export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlanParts, chatHistory, onSendMessage, isChatLoading, format }) => {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
-
+  
   useEffect(() => {
     if (lessonPlanParts) {
       setCopyStatus('idle');
@@ -185,7 +257,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlan
   }, [lessonPlanParts]);
 
   const handleCopy = () => {
-    if (lessonPlanParts?.lessonPlanContent) {
+    if (lessonPlanParts) {
       navigator.clipboard.writeText(lessonPlanParts.lessonPlanContent).then(() => {
         setCopyStatus('copied');
         setTimeout(() => setCopyStatus('idle'), 2000);
@@ -194,7 +266,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlan
   };
   
   const handleDownload = () => {
-    if (!lessonPlanParts?.lessonPlanContent) return;
+    if (!lessonPlanParts) return;
 
     const fullHtml = `
       <!DOCTYPE html>
@@ -204,10 +276,14 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlan
         <title>Giáo án</title>
         <style>
           body { font-family: 'Times New Roman', serif; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid black; padding: 8px; text-align: left; vertical-align: top; }
+          th { background-color: #f2f2f2; }
+          p { margin: 0 0 0.5em 0; }
         </style>
       </head>
       <body>
-        ${formatTextForDoc(lessonPlanParts.lessonPlanContent)}
+        ${formatTextForDoc(lessonPlanParts.lessonPlanContent, format)}
       </body>
       </html>
     `;
@@ -217,10 +293,9 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlan
     });
     
     let fileName = 'GiaoAn.doc';
-    const lines = lessonPlanParts.lessonPlanContent.split('\n');
-    const subjectLine = lines.find(line => line.includes('Đề tài:'));
-    if (subjectLine) {
-        const subject = subjectLine.split(':')[1].trim().replace(/\s+/g, '_');
+    const subjectMatch = lessonPlanParts.lessonPlanContent.match(/Đề tài\s*:\s*(.*)/);
+    if (subjectMatch && subjectMatch[1]) {
+        const subject = subjectMatch[1].trim().replace(/\s+/g, '_');
         fileName = `GiaoAn_${subject}.doc`;
     }
 
@@ -241,11 +316,11 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlan
             <i className="fas fa-book-open-reader"></i>
         </div>
         <h3 className="text-2xl font-semibold text-slate-700">Giáo án của bạn sẽ xuất hiện ở đây</h3>
-        <p className="mt-2 max-w-md">Kế hoạch chi tiết cho các hoạt động sẽ được AI tạo ra và hiển thị tại đây.</p>
+        <p className="mt-2 max-w-md">Điền thông tin và nhấn "Tạo giáo án với AI" để bắt đầu sáng tạo.</p>
       </div>
     );
   }
-
+  
   return (
     <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-lg h-full flex flex-col">
       {/* Header with actions */}
@@ -268,10 +343,10 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ lessonPlan
             </button>
         </div>
       </div>
-
+      
       {/* Content */}
-      <div className="p-6 sm:p-8 overflow-y-auto flex-grow" style={{maxHeight: '70vh'}}>
-        <FormattedContent text={lessonPlanParts.lessonPlanContent} />
+      <div className="p-6 sm:p-8 overflow-y-auto flex-grow" style={{maxHeight: '60vh'}}>
+        <FormattedContent text={lessonPlanParts.lessonPlanContent} format={format} />
       </div>
 
       {/* Chat Interface */}

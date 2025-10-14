@@ -8,6 +8,7 @@ export interface LessonPlanRequest {
   teachingDate: string;
   teacherName: string;
   schoolName: string;
+  format: 'no-columns' | 'with-columns';
 }
 
 export interface LessonPlanParts {

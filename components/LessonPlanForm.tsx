@@ -62,6 +62,7 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
   const [ageGroup, setAgeGroup] = useState(AGE_GROUPS[6]); // Defaults to 'Trẻ 4-5 tuổi'
   const [topic, setTopic] = useState(''); // Chủ đề
   const [subject, setSubject] = useState(''); // Đề tài
+  const [format, setFormat] = useState<'no-columns' | 'with-columns'>('no-columns');
 
   // Detailed Info
   const [duration, setDuration] = useState('25-30 phút'); // Fixed duration
@@ -81,6 +82,9 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
         setSchoolName(initialData.schoolName);
         setPreparationDate(initialData.preparationDate);
         setTeachingDate(initialData.teachingDate);
+        if (initialData.format) {
+          setFormat(initialData.format);
+        }
     }
   }, [initialData]);
 
@@ -99,7 +103,8 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
       teacherName,
       schoolName,
       preparationDate,
-      teachingDate
+      teachingDate,
+      format
     });
   };
 
@@ -129,6 +134,16 @@ export const LessonPlanForm: React.FC<LessonPlanFormProps> = ({ onSubmit, isLoad
             <select id="ageGroup" value={ageGroup} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAgeGroup(e.target.value)}
               className="block w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition">
               {AGE_GROUPS.map((age) => <option key={age} value={age}>{age}</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="format" className="block text-sm font-medium text-slate-700 mb-1">
+              <i className="fas fa-columns mr-2 text-sky-500"></i>Định dạng
+            </label>
+            <select id="format" value={format} onChange={(e) => setFormat(e.target.value as 'no-columns' | 'with-columns')}
+              className="block w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+              <option value="no-columns">Văn bản liền mạch</option>
+              <option value="with-columns">Chia cột (Cô - Trẻ)</option>
             </select>
           </div>
           <InputField id="topic" label="Chủ đề" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Ví dụ: Ngành nghề" required icon="fa-tags" />

@@ -12,33 +12,69 @@ const formatDate = (dateString: string): string => {
 };
 
 const buildGenerationPrompt = (request: LessonPlanRequest): string => {
-  return `
-    Bạn là một chuyên gia soạn giáo án mầm non tại Việt Nam, am hiểu sâu sắc về Chương trình Giáo dục Mầm non ban hành bởi Bộ Giáo dục và Đào tạo. Dựa vào các thông tin sau đây, hãy tạo một giáo án chi tiết và sáng tạo, tuân thủ các định hướng cốt lõi của năm học 2024-2025.
+  const commonDirectives = `Bạn là một chuyên gia soạn giáo án mầm non tại Việt Nam, am hiểu sâu sắc về Chương trình Giáo dục Mầm non ban hành bởi Bộ Giáo dục và Đào tạo. Dựa vào các thông tin sau đây, hãy tạo một giáo án chi tiết và sáng tạo, tuân thủ các định hướng cốt lõi của năm học 2024-2025.
 
-    **Định hướng chuyên môn cần tuân thủ:**
-    - **Lấy trẻ làm trung tâm:** Các hoạt động phải xuất phát từ hứng thú, nhu cầu và khả năng của trẻ.
-    - **Học thông qua chơi và trải nghiệm:** Ưu tiên các hoạt động thực hành, khám phá để trẻ tự mình tìm tòi, học hỏi.
-    - **Lồng ghép kỹ năng:** Tích hợp một cách tự nhiên các nội dung giáo dục về an toàn giao thông, bảo vệ môi trường, và kỹ năng sống cần thiết.
-    - **Phát triển thể chất & Dinh dưỡng:** Chú trọng các hoạt động vận động và cung cấp kiến thức dinh dưỡng phù hợp.
+**Định hướng chuyên môn cần tuân thủ:**
+- **Lấy trẻ làm trung tâm:** Các hoạt động phải xuất phát từ hứng thú, nhu cầu và khả năng của trẻ.
+- **Học thông qua chơi và trải nghiệm:** Ưu tiên các hoạt động thực hành, khám phá để trẻ tự mình tìm tòi, học hỏi.
+- **Lồng ghép kỹ năng:** Tích hợp một cách tự nhiên các nội dung giáo dục về an toàn giao thông, bảo vệ môi trường, và kỹ năng sống cần thiết.
+- **Phát triển thể chất & Dinh dưỡng:** Chú trọng các hoạt động vận động và cung cấp kiến thức dinh dưỡng phù hợp.
 
-    **Thông tin yêu cầu cụ thể:**
-    - **Lĩnh vực**: ${request.activityType}
-    - **Độ tuổi**: ${request.ageGroup}
-    - **Chủ đề**: ${request.topic}
-    - **Đề tài**: ${request.subject}
-    - **Thời gian dự kiến**: ${request.duration}
-    - **Người soạn**: ${request.teacherName}
-    - **Đơn vị**: ${request.schoolName}
-    - **Ngày soạn**: ${formatDate(request.preparationDate)}
-    - **Ngày dạy**: ${formatDate(request.teachingDate)}
+**Thông tin yêu cầu cụ thể:**
+- **Lĩnh vực**: ${request.activityType}
+- **Độ tuổi**: ${request.ageGroup}
+- **Chủ đề**: ${request.topic}
+- **Đề tài**: ${request.subject}
+- **Thời gian dự kiến**: ${request.duration}
+- **Người soạn**: ${request.teacherName}
+- **Đơn vị**: ${request.schoolName}
+- **Ngày soạn**: ${formatDate(request.preparationDate)}
+- **Ngày dạy**: ${formatDate(request.teachingDate)}
+`;
 
-    **Yêu cầu về cấu trúc đầu ra:**
-    Bạn PHẢI trả lời bằng một đối tượng JSON duy nhất, không có bất kỳ văn bản nào khác trước hoặc sau nó.
-    Đối tượng JSON phải có 1 thuộc tính sau:
-    1.  \`lessonPlanContent\`: Nội dung chi tiết cho toàn bộ giáo án. Cấu trúc của giáo án phải bao gồm các phần chính: I. MỤC TIÊU (Kiến thức, Kỹ năng, Thái độ), II. CHUẨN BỊ, và III. TỔ CHỨC HOẠT ĐỘNG. Trong đó, phần TỔ CHỨC HOẠT ĐỘNG phải được chia thành các hoạt động nhỏ, tuần tự như "Hoạt động 1: [Tên hoạt động]", "Hoạt động 2: [Tên hoạt động]",... Mỗi hoạt động cần mô tả rõ hoạt động của cô và hoạt động của trẻ.
+  const outputRequirementHeader = `
+**Yêu cầu về cấu trúc đầu ra:**
+Bạn PHẢI trả lời bằng một đối tượng JSON duy nhất, không có bất kỳ văn bản nào khác trước hoặc sau nó.
+Đối tượng JSON phải có 1 thuộc tính là \`lessonPlanContent\`.
+Cấu trúc của giáo án trong \`lessonPlanContent\` phải bao gồm các phần chính: **I. MỤC TIÊU** (Kiến thức, Kỹ năng, Thái độ), **II. CHUẨN BỊ**, và **III. TỔ CHỨC HOẠT ĐỘNG** (hoặc **III. CÁCH TIẾN HÀNH**).
     
-    **QUAN TRỌNG:** Toàn bộ văn bản trong thuộc tính \`lessonPlanContent\` phải là dạng văn bản thuần túy (plain text), không chứa bất kỳ ký tự định dạng Markdown nào như dấu sao (*) hoặc dấu thăng (#). Giữ cấu trúc rõ ràng bằng cách xuống dòng và sử dụng các đề mục như "I. MỤC TIÊU", "1. Kiến thức:".
-  `;
+**QUAN TRỌNG:** Để định dạng văn bản, hãy sử dụng Markdown. Dùng hai dấu sao (\`**\`) để **in đậm** các đề mục chính và phụ (ví dụ: \`**I. MỤC TIÊU**\`, \`**1. Kiến thức:**\`).
+`;
+
+  let formatSpecificInstructions = '';
+  if (request.format === 'with-columns') {
+    formatSpecificInstructions = `
+**Yêu cầu định dạng (Chia cột):**
+Phần **III. TỔ CHỨC HOẠT ĐỘNG** phải được trình bày theo dạng 2 cột tường minh. Với mỗi bước nhỏ trong phần này, bạn phải tách riêng và ghi rõ hai phần: "**Hoạt động của cô:**" và "**Hoạt động của trẻ:**".
+
+**VÍ DỤ MẪU (trích đoạn phần III):**
+\`\`\`
+**III. Cách tiến hành**
+
+**1. Mở đầu hoạt động: Ổn định tổ chức**
+**Hoạt động của cô:**
+- Xin được nhiệt liệt chào mừng các cô giáo và các bé đến với Chương trình “Chúng tôi là chiến sĩ”.
+- Tham gia chương trình hôm nay, xin trân trọng giới thiệu: + Tiểu đội 1 và + Tiểu đội 2.
+**Hoạt động của trẻ:**
+- Trẻ chú ý lắng nghe.
+
+**2. Hoạt động trọng tâm**
+**Hoạt động 1: Khởi động**
+**Hoạt động của cô:**
+- Cô điều khiển cho 2 đội đi nối nhau thành 1 vòng tròn khép kín.
+**Hoạt động của trẻ:**
+- Trẻ đi các kiểu đi theo hiệu lệnh của cô.
+\`\`\`
+---
+Bây giờ, hãy tạo giáo án hoàn chỉnh theo đúng định dạng **chia cột** này.`;
+  } else { // 'no-columns'
+    formatSpecificInstructions = `
+**Yêu cầu định dạng (Liền mạch):**
+Phần **III. TỔ CHỨC HOẠT ĐỘNG** phải được chia thành các hoạt động nhỏ, tuần tự như "**Hoạt động 1: [Tên hoạt động]**", "**Hoạt động 2: [Tên hoạt động]**",... Mỗi hoạt động cần mô tả rõ hoạt động của cô và hoạt động của trẻ trong một khối văn bản liền mạch.
+`;
+  }
+
+  return commonDirectives + outputRequirementHeader + formatSpecificInstructions;
 };
 
 const lessonPlanPartsSchema = {
@@ -53,9 +89,7 @@ export const generateLessonPlan = async (
   request: LessonPlanRequest,
   apiKey: string,
 ): Promise<LessonPlanParts> => {
-  if (!apiKey) {
-    throw new Error("API Key không được cung cấp.");
-  }
+  if (!apiKey) throw new Error("API Key is required.");
   const ai = new GoogleGenAI({ apiKey });
   const prompt = buildGenerationPrompt(request);
 
@@ -76,7 +110,7 @@ export const generateLessonPlan = async (
 
   } catch (error) {
     console.error("Lỗi khi gọi Gemini API:", error);
-    throw new Error("Không thể tạo giáo án. Vui lòng kiểm tra lại API Key hoặc thử lại sau.");
+    throw new Error("Không thể tạo giáo án. Vui lòng thử lại sau.");
   }
 };
 
@@ -105,13 +139,13 @@ const buildRefinePrompt = (
 
     **Nhiệm vụ của bạn:**
     1.  Đọc và hiểu yêu cầu mới nhất của người dùng trong bối cảnh giáo án hiện tại và lịch sử trò chuyện.
-    2.  Tạo ra một phiên bản **mới** của toàn bộ giáo án (trong thuộc tính \`lessonPlanContent\`) dựa trên yêu cầu chỉnh sửa.
+    2.  Tạo ra một phiên bản **mới** của toàn bộ giáo án (trong thuộc tính \`lessonPlanContent\`) dựa trên yêu cầu chỉnh sửa. Quan trọng: Giữ nguyên định dạng gốc của giáo án (kiểu liền mạch hoặc kiểu chia cột "**Hoạt động của cô:**/**Hoạt động của trẻ:**").
     3.  Viết một câu trả lời ngắn gọn, thân thiện cho người dùng, xác nhận rằng bạn đã thực hiện thay đổi.
 
     **Yêu cầu về cấu trúc đầu ra:**
     Bạn PHẢI trả lời bằng một đối tượng JSON duy nhất, không có bất kỳ văn bản nào khác trước hoặc sau nó.
     Đối tượng JSON phải có 2 thuộc tính:
-    1.  \`lessonPlan\`: Một đối tượng chứa thuộc tính \`lessonPlanContent\` của giáo án đã được cập nhật. Toàn bộ nội dung trong thuộc tính này phải là văn bản thuần túy (plain text), không chứa ký tự định dạng Markdown.
+    1.  \`lessonPlan\`: Một đối tượng chứa thuộc tính \`lessonPlanContent\` của giáo án đã được cập nhật. Toàn bộ nội dung trong thuộc tính này phải sử dụng Markdown cho định dạng in đậm (\`**text**\`).
     2.  \`chatResponse\`: Một chuỗi (string) chứa câu trả lời của bạn cho người dùng.
 
     Bây giờ, hãy xử lý yêu cầu và trả về đối tượng JSON theo đúng định dạng.
@@ -133,9 +167,7 @@ export const refineLessonPlan = async (
   newMessage: string,
   apiKey: string,
 ): Promise<RefineResponse> => {
-  if (!apiKey) {
-    throw new Error("API Key không được cung cấp.");
-  }
+  if (!apiKey) throw new Error("API Key is required.");
   const ai = new GoogleGenAI({ apiKey });
   const prompt = buildRefinePrompt(currentPlan, history, newMessage);
 
@@ -154,6 +186,6 @@ export const refineLessonPlan = async (
     return JSON.parse(jsonText) as RefineResponse;
   } catch (error) {
     console.error("Lỗi khi gọi Gemini API để chỉnh sửa:", error);
-    throw new Error("Không thể chỉnh sửa giáo án. Vui lòng kiểm tra lại API Key hoặc thử lại sau.");
+    throw new Error("Không thể chỉnh sửa giáo án. Vui lòng thử lại sau.");
   }
 };

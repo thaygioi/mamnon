@@ -59,7 +59,9 @@ const App: React.FC = () => {
 
   const [apiKey, setApiKey] = useState<string>('');
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
-
+  
+  // On initial load, check for API key in local storage.
+  // If not found, force the modal to open.
   useEffect(() => {
     try {
         const storedPlans = localStorage.getItem('lessonPlans');
@@ -70,7 +72,8 @@ const App: React.FC = () => {
         if (storedApiKey) {
             setApiKey(storedApiKey);
         } else {
-            setIsApiKeyModalOpen(true); // Open modal if no key is found
+            // Force the modal open if no key is stored
+            setIsApiKeyModalOpen(true);
         }
     } catch (e) {
         console.error("Failed to load data from localStorage", e);
@@ -228,6 +231,7 @@ const App: React.FC = () => {
               chatHistory={chatHistory}
               onSendMessage={handleSendMessage}
               isChatLoading={isChatLoading}
+              format={currentRequest?.format || 'no-columns'}
             />
           </div>
         </div>
