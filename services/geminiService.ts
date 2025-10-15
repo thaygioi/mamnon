@@ -181,10 +181,8 @@ Bây giờ, hãy viết nội dung đầy đủ và chi tiết cho các Hoạt �
 
 // --- API CALL FUNCTIONS ---
 
-// FIX: Remove apiKey parameter and use process.env.API_KEY directly.
-const generateStringContent = async (prompt: string): Promise<string> => {
-    // FIX: Initialize GoogleGenAI with API key from environment variables.
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const generateStringContent = async (prompt: string, apiKey: string): Promise<string> => {
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: prompt,
@@ -196,36 +194,30 @@ const generateStringContent = async (prompt: string): Promise<string> => {
     return response.text;
 };
 
-// FIX: Remove apiKey parameter.
-export const generateLearningActivity = async (request: LessonPlanRequest): Promise<string> => {
+export const generateLearningActivity = async (request: LessonPlanRequest, apiKey: string): Promise<string> => {
     const prompt = buildLearningActivityPrompt(request);
     try {
-        // FIX: Remove apiKey argument.
-        return await generateStringContent(prompt);
+        return await generateStringContent(prompt, apiKey);
     } catch (error) {
         console.error("Lỗi khi tạo Hoạt động học:", error);
         throw new Error("Không thể tạo Hoạt động học. Vui lòng thử lại sau.");
     }
 };
 
-// FIX: Remove apiKey parameter.
-export const generateOutdoorActivity = async (request: LessonPlanRequest, learningActivity: string): Promise<string> => {
+export const generateOutdoorActivity = async (request: LessonPlanRequest, learningActivity: string, apiKey: string): Promise<string> => {
     const prompt = buildOutdoorActivityPrompt(request, learningActivity);
     try {
-        // FIX: Remove apiKey argument.
-        return await generateStringContent(prompt);
+        return await generateStringContent(prompt, apiKey);
     } catch (error) {
         console.error("Lỗi khi tạo Hoạt động ngoài trời:", error);
         throw new Error("Không thể tạo Hoạt động ngoài trời. Vui lòng thử lại sau.");
     }
 };
 
-// FIX: Remove apiKey parameter.
-export const generateCornerActivity = async (request: LessonPlanRequest, learningActivity: string): Promise<string> => {
+export const generateCornerActivity = async (request: LessonPlanRequest, learningActivity: string, apiKey: string): Promise<string> => {
     const prompt = buildCornerActivityPrompt(request, learningActivity);
     try {
-        // FIX: Remove apiKey argument.
-        return await generateStringContent(prompt);
+        return await generateStringContent(prompt, apiKey);
     } catch (error) {
         console.error("Lỗi khi tạo Hoạt động góc:", error);
         throw new Error("Không thể tạo Hoạt động góc. Vui lòng thử lại sau.");
@@ -298,14 +290,13 @@ const refineResponseSchema = {
     required: ["lessonPlan", "chatResponse"],
 };
 
-// FIX: Remove apiKey parameter.
 export const refineLessonPlan = async (
   currentPlan: LessonPlanParts,
   history: ChatMessage[],
   newMessage: string,
+  apiKey: string,
 ): Promise<RefineResponse> => {
-  // FIX: Initialize GoogleGenAI with API key from environment variables.
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
   const prompt = buildRefinePrompt(currentPlan, history, newMessage);
 
   try {

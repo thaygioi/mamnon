@@ -1,11 +1,11 @@
 
 import React from 'react';
 
-// FIX: Remove unused prop for opening API key modal.
-interface HeaderProps {}
+interface HeaderProps {
+  onOpenApiKeyModal: () => void;
+}
 
-// FIX: Remove unused prop for opening API key modal.
-export const Header: React.FC<HeaderProps> = () => {
+export const Header: React.FC<HeaderProps> = ({ onOpenApiKeyModal }) => {
   return (
     <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-sm border-b border-slate-200/50">
       <div className="container mx-auto px-4 sm:px-6 lg:p-8">
@@ -18,7 +18,15 @@ export const Header: React.FC<HeaderProps> = () => {
               Trình tạo <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-cyan-600">Giáo án Mầm non</span>
             </h1>
           </div>
-          {/* FIX: Remove API key settings button from the UI. */}
+          <div className="flex items-center">
+            <button
+              onClick={onOpenApiKeyModal}
+              title="Cài đặt API Key"
+              className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-sky-500 transition-all"
+            >
+              <i className="fas fa-cog text-xl"></i>
+            </button>
+          </div>
         </div>
       </div>
     </header>
