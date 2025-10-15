@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { LessonPlanForm } from './components/LessonPlanForm';
 import { LessonPlanDisplay } from './components/LessonPlanDisplay';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
-import { ApiKeyModal } from './components/ApiKeyModal';
+// import { ApiKeyModal } from './components/ApiKeyModal';
 import { LessonPlanRequest, LessonPlanParts, ChatMessage, SavedLessonPlan } from './types';
-import { generateLessonPlan, refineLessonPlan } from './services/geminiService';
+// FIX: Update imports to use service functions without apiKey parameter.
+import { generateLearningActivity, generateOutdoorActivity, generateCornerActivity, refineLessonPlan } from './services/geminiService';
 
 const SavedPlans: React.FC<{
   plans: SavedLessonPlan[];
@@ -57,39 +59,34 @@ const App: React.FC = () => {
   const [currentPlanId, setCurrentPlanId] = useState<number | null>(null);
   const [currentRequest, setCurrentRequest] = useState<LessonPlanRequest | null>(null);
 
-  const [apiKey, setApiKey] = useState<string>('');
-  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  // FIX: Remove API key management from UI. API key must be handled by environment variables.
+  // const [apiKey, setApiKey] = useState<string>('');
+  // const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   
-  // On initial load, check for API key in local storage.
-  // If not found, force the modal to open.
+  // FIX: Remove API key management from UI.
+  // On initial load, only check for saved lesson plans.
   useEffect(() => {
     try {
         const storedPlans = localStorage.getItem('lessonPlans');
         if (storedPlans) {
             setSavedPlans(JSON.parse(storedPlans));
         }
-        const storedApiKey = localStorage.getItem('geminiApiKey');
-        if (storedApiKey) {
-            setApiKey(storedApiKey);
-        } else {
-            // Force the modal open if no key is stored
-            setIsApiKeyModalOpen(true);
-        }
     } catch (e) {
         console.error("Failed to load data from localStorage", e);
     }
   }, []);
   
-  const handleSaveApiKey = (key: string) => {
-    setApiKey(key);
-    try {
-      localStorage.setItem('geminiApiKey', key);
-    } catch(e) {
-      console.error("Failed to save API key to localStorage", e);
-      setError("Không thể lưu API Key vào trình duyệt.");
-    }
-    setIsApiKeyModalOpen(false);
-  };
+  // FIX: Remove API key management from UI.
+  // const handleSaveApiKey = (key: string) => {
+  //   setApiKey(key);
+  //   try {
+  //     localStorage.setItem('geminiApiKey', key);
+  //   } catch(e) {
+  //     console.error("Failed to save API key to localStorage", e);
+  //     setError("Không thể lưu API Key vào trình duyệt.");
+  //   }
+  //   setIsApiKeyModalOpen(false);
+  // };
 
   const updateStoredPlans = (plans: SavedLessonPlan[]) => {
       try {
@@ -100,31 +97,52 @@ const App: React.FC = () => {
   };
 
   const handleGenerateLessonPlan = async (request: LessonPlanRequest) => {
-    if (!apiKey) {
-      setError("Vui lòng nhập API Key của bạn để tạo giáo án.");
-      setIsApiKeyModalOpen(true);
-      return;
-    }
+    // FIX: Remove API key check. API key is handled by the environment.
     setIsLoading(true);
     setError(null);
     setLessonPlan(null);
     setChatHistory([]);
+    setCurrentRequest(request); // Set request info early for the form
+
     try {
-      const result = await generateLessonPlan(request, apiKey);
+      // Step 1: Generate the main learning activity
+      // FIX: Remove apiKey argument from service call.
+      const learningActivity = await generateLearningActivity(request);
       
+      // Show the first part immediately with placeholders for the rest
+      const initialParts: LessonPlanParts = {
+        learningActivity,
+        outdoorActivity: 'AI đang soạn thảo hoạt động này...',
+        cornerActivity: 'AI đang soạn thảo hoạt động này...',
+      };
+      setLessonPlan(initialParts);
+      
+      // Step 2: Generate supplementary activities in parallel using the main activity as context
+      // FIX: Remove apiKey arguments from service calls.
+      const [outdoorActivity, cornerActivity] = await Promise.all([
+        generateOutdoorActivity(request, learningActivity),
+        generateCornerActivity(request, learningActivity),
+      ]);
+      
+      const finalParts: LessonPlanParts = {
+        learningActivity,
+        outdoorActivity,
+        cornerActivity,
+      };
+
+      // Update the view with all parts and save the complete plan
+      setLessonPlan(finalParts);
+
       const newPlan: SavedLessonPlan = {
           id: Date.now(),
           request: request,
-          parts: result,
+          parts: finalParts,
       };
       
       const updatedPlans = [...savedPlans, newPlan];
       setSavedPlans(updatedPlans);
       updateStoredPlans(updatedPlans);
-
-      setLessonPlan(result);
       setCurrentPlanId(newPlan.id);
-      setCurrentRequest(request);
 
     } catch (err) {
       if (err instanceof Error) {
@@ -133,13 +151,15 @@ const App: React.FC = () => {
         setError("Đã có lỗi không xác định xảy ra.");
       }
       setLessonPlan(null);
+      setCurrentRequest(null);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSendMessage = async (message: string) => {
-    if (!lessonPlan || currentPlanId === null || !apiKey) return;
+    // FIX: Remove apiKey check.
+    if (!lessonPlan || currentPlanId === null) return;
 
     const newUserMessage: ChatMessage = { role: 'user', content: message };
     const updatedHistory = [...chatHistory, newUserMessage];
@@ -148,7 +168,8 @@ const App: React.FC = () => {
     setError(null);
 
     try {
-      const result = await refineLessonPlan(lessonPlan, updatedHistory, message, apiKey);
+      // FIX: Remove apiKey argument from service call.
+      const result = await refineLessonPlan(lessonPlan, updatedHistory, message);
 
       const updatedPlans = savedPlans.map(p =>
           p.id === currentPlanId ? { ...p, parts: result.lessonPlan } : p
@@ -198,7 +219,8 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-teal-50 via-cyan-50 to-sky-100">
-      <Header onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)} />
+      {/* FIX: Remove prop for opening API key modal. */}
+      <Header />
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
           <div className="lg:col-span-1 space-y-8">
@@ -237,13 +259,14 @@ const App: React.FC = () => {
         </div>
       </main>
       <Footer />
-      <ApiKeyModal 
+      {/* FIX: Remove API key modal from UI. */}
+      {/* <ApiKeyModal 
         isOpen={isApiKeyModalOpen}
         onClose={() => setIsApiKeyModalOpen(false)}
         onSave={handleSaveApiKey}
         currentKey={apiKey}
         isInitialSetup={!apiKey}
-      />
+      /> */}
     </div>
   );
 };

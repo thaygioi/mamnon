@@ -12,7 +12,9 @@ export interface LessonPlanRequest {
 }
 
 export interface LessonPlanParts {
-  lessonPlanContent: string;
+  learningActivity: string; // Formerly lessonPlanContent
+  outdoorActivity: string;
+  cornerActivity: string;
 }
 
 // NEW: For chat functionality
