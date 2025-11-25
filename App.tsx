@@ -5,11 +5,26 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
 import { ApiKeyModal } from './components/ApiKeyModal';
-import Login from './components/Login';   // ⭐ THÊM LOGIN
+import Login from './components/Login';
 
-import { LessonPlanRequest, LessonPlanParts, ChatMessage, SavedLessonPlan } from './types';
-import { generateLearningActivity, generateOutdoorActivity, generateCornerActivity, refineLessonPlan } from './services/geminiService';
+import {
+  LessonPlanRequest,
+  LessonPlanParts,
+  ChatMessage,
+  SavedLessonPlan
+} from './types';
 
+import {
+  generateLearningActivity,
+  generateOutdoorActivity,
+  generateCornerActivity,
+  refineLessonPlan
+} from './services/geminiService';
+
+
+// ============================
+// DANH MỤC GIÁO ÁN ĐÃ LƯU
+// ============================
 const SavedPlans: React.FC<{
   plans: SavedLessonPlan[];
   onLoad: (plan: SavedLessonPlan) => void;
@@ -22,17 +37,36 @@ const SavedPlans: React.FC<{
       {plans.length > 0 ? (
         <ul className="space-y-3 max-h-60 overflow-y-auto pr-2">
           {[...plans].reverse().map(plan => (
-            <li key={plan.id} className={`p-3 rounded-lg transition-all ${currentPlanId === plan.id ? 'bg-teal-100 border border-teal-200' : 'bg-slate-50 border'}`}>
+            <li
+              key={plan.id}
+              className={`p-3 rounded-lg transition-all ${
+                currentPlanId === plan.id
+                  ? 'bg-teal-100 border border-teal-200'
+                  : 'bg-slate-50 border'
+              }`}
+            >
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="font-semibold text-slate-700">{plan.request.subject}</p>
-                  <p className="text-xs text-slate-500">{plan.request.topic}</p>
+                  <p className="font-semibold text-slate-700">
+                    {plan.request.subject}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {plan.request.topic}
+                  </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <button onClick={() => onLoad(plan)} title="Tải giáo án" className="w-8 h-8 flex items-center justify-center rounded-md bg-slate-200 hover:bg-sky-500 hover:text-white text-slate-600 transition">
+                  <button
+                    onClick={() => onLoad(plan)}
+                    title="Tải giáo án"
+                    className="w-8 h-8 flex items-center justify-center rounded-md bg-slate-200 hover:bg-sky-500 hover:text-white text-slate-600 transition"
+                  >
                     <i className="fas fa-upload"></i>
                   </button>
-                  <button onClick={() => onDelete(plan.id)} title="Xoá giáo án" className="w-8 h-8 flex items-center justify-center rounded-md bg-slate-200 hover:bg-red-500 hover:text-white text-slate-600 transition">
+                  <button
+                    onClick={() => onDelete(plan.id)}
+                    title="Xoá giáo án"
+                    className="w-8 h-8 flex items-center justify-center rounded-md bg-slate-200 hover:bg-red-500 hover:text-white text-slate-600 transition"
+                  >
                     <i className="fas fa-trash-alt"></i>
                   </button>
                 </div>
@@ -48,16 +82,15 @@ const SavedPlans: React.FC<{
 };
 
 
+// ============================
+// APP CHÍNH
+// ============================
 const App: React.FC = () => {
+
   // ⭐ STATE LOGIN
   const [loggedIn, setLoggedIn] = useState<boolean>(
     localStorage.getItem("loggedIn") === "yes"
   );
-
-  // ⭐ Nếu chưa login → hiện Login screen
-  if (!loggedIn) {
-    return <Login onLoginSuccess={() => setLoggedIn(true)} />;
-  }
 
   // ⭐ Logout
   const handleLogout = () => {
@@ -65,10 +98,10 @@ const App: React.FC = () => {
     setLoggedIn(false);
   };
 
-  // ===========================
-  // ========== APP =============
-  // ===========================
 
+  // ===========================
+  // STATE CHÍNH CỦA ỨNG DỤNG
+  // ===========================
   const [lessonPlan, setLessonPlan] = useState<LessonPlanParts | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,45 +114,55 @@ const App: React.FC = () => {
 
   const [apiKey, setApiKey] = useState<string>('');
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
-  
+
+
+  // ⭐ USE EFFECT — load dữ liệu
   useEffect(() => {
     try {
-        const storedKey = localStorage.getItem('geminiApiKey');
-        if (storedKey) {
-            setApiKey(storedKey);
-        } else {
-            setIsApiKeyModalOpen(true);
-        }
+      const storedKey = localStorage.getItem('geminiApiKey');
+      if (storedKey) setApiKey(storedKey);
+      else setIsApiKeyModalOpen(true);
 
-        const storedPlans = localStorage.getItem('lessonPlans');
-        if (storedPlans) {
-            setSavedPlans(JSON.parse(storedPlans));
-        }
+      const storedPlans = localStorage.getItem('lessonPlans');
+      if (storedPlans) setSavedPlans(JSON.parse(storedPlans));
+
     } catch (e) {
-        console.error("Failed to load data from localStorage", e);
+      console.error("Failed to load data from localStorage", e);
     }
   }, []);
-  
+
+
+  // ⭐⭐ 🔥 DI CHUYỂN LOGIN XUỐNG ĐÂY SAU CÁC STATE + EFFECT 🔥 ⭐⭐
+  if (!loggedIn) {
+    return <Login onLoginSuccess={() => setLoggedIn(true)} />;
+  }
+
+
+  // ===========================
+  // HÀM XỬ LÝ
+  // ===========================
   const handleSaveApiKey = (key: string) => {
     setApiKey(key);
     try {
       localStorage.setItem('geminiApiKey', key);
     } catch(e) {
-      console.error("Failed to save API key to localStorage", e);
+      console.error("Failed to save API key", e);
       setError("Không thể lưu API Key vào trình duyệt.");
     }
     setIsApiKeyModalOpen(false);
   };
 
   const updateStoredPlans = (plans: SavedLessonPlan[]) => {
-      try {
-          localStorage.setItem('lessonPlans', JSON.stringify(plans));
-      } catch(e) {
-          console.error("Failed to save plans to localStorage", e);
-      }
+    try {
+      localStorage.setItem('lessonPlans', JSON.stringify(plans));
+    } catch(e) {
+      console.error("Failed to save plans", e);
+    }
   };
 
+
   const handleGenerateLessonPlan = async (request: LessonPlanRequest) => {
+
     if (!apiKey) {
       setIsApiKeyModalOpen(true);
       setError("Vui lòng nhập API Key để tiếp tục.");
@@ -134,19 +177,20 @@ const App: React.FC = () => {
 
     try {
       const learningActivity = await generateLearningActivity(request, apiKey);
-      
+
       const initialParts: LessonPlanParts = {
         learningActivity,
         outdoorActivity: 'AI đang soạn thảo hoạt động này...',
         cornerActivity: 'AI đang soạn thảo hoạt động này...',
       };
+
       setLessonPlan(initialParts);
-      
+
       const [outdoorActivity, cornerActivity] = await Promise.all([
         generateOutdoorActivity(request, learningActivity, apiKey),
         generateCornerActivity(request, learningActivity, apiKey),
       ]);
-      
+
       const finalParts: LessonPlanParts = {
         learningActivity,
         outdoorActivity,
@@ -156,22 +200,18 @@ const App: React.FC = () => {
       setLessonPlan(finalParts);
 
       const newPlan: SavedLessonPlan = {
-          id: Date.now(),
-          request: request,
-          parts: finalParts,
+        id: Date.now(),
+        request,
+        parts: finalParts,
       };
-      
+
       const updatedPlans = [...savedPlans, newPlan];
       setSavedPlans(updatedPlans);
       updateStoredPlans(updatedPlans);
       setCurrentPlanId(newPlan.id);
 
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Đã có lỗi không xác định xảy ra.");
-      }
+      setError(err instanceof Error ? err.message : "Đã có lỗi không xác định xảy ra.");
       setLessonPlan(null);
       setCurrentRequest(null);
     } finally {
@@ -179,105 +219,124 @@ const App: React.FC = () => {
     }
   };
 
+
   const handleSendMessage = async (message: string) => {
     if (!apiKey) {
-        setIsApiKeyModalOpen(true);
-        setError("Vui lòng nhập API Key để tiếp tục.");
-        return;
+      setIsApiKeyModalOpen(true);
+      setError("Vui lòng nhập API Key để tiếp tục.");
+      return;
     }
     if (!lessonPlan || currentPlanId === null) return;
 
-    const newUserMessage: ChatMessage = { role: 'user', content: message };
-    const updatedHistory = [...chatHistory, newUserMessage];
+    const newUserMsg: ChatMessage = { role: 'user', content: message };
+    const updatedHistory = [...chatHistory, newUserMsg];
     setChatHistory(updatedHistory);
     setIsChatLoading(true);
     setError(null);
 
     try {
-      const result = await refineLessonPlan(lessonPlan, updatedHistory, message, apiKey);
+      const result = await refineLessonPlan(
+        lessonPlan,
+        updatedHistory,
+        message,
+        apiKey
+      );
 
       const updatedPlans = savedPlans.map(p =>
-          p.id === currentPlanId ? { ...p, parts: result.lessonPlan } : p
+        p.id === currentPlanId
+          ? { ...p, parts: result.lessonPlan }
+          : p
       );
+
       setSavedPlans(updatedPlans);
       updateStoredPlans(updatedPlans);
-      
+
       setLessonPlan(result.lessonPlan);
-      const modelResponse: ChatMessage = { role: 'model', content: result.chatResponse };
-      setChatHistory(prev => [...prev, modelResponse]);
+
+      setChatHistory(prev => [
+        ...prev,
+        { role: 'model', content: result.chatResponse }
+      ]);
+
     } catch (err) {
-       if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Đã có lỗi không xác định xảy ra.");
-      }
-      setChatHistory(chatHistory);
+      setError(err instanceof Error ? err.message : "Đã có lỗi không xác định.");
     } finally {
       setIsChatLoading(false);
     }
-  }
+  };
+
 
   const handleLoadPlan = (plan: SavedLessonPlan) => {
-      setLessonPlan(plan.parts);
-      setCurrentRequest(plan.request);
-      setCurrentPlanId(plan.id);
-      setChatHistory([]);
-      setError(null);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  
-  const handleDeletePlan = (id: number) => {
-      if (window.confirm("Bạn có chắc chắn muốn xoá giáo án này không?")) {
-          const updatedPlans = savedPlans.filter(p => p.id !== id);
-          setSavedPlans(updatedPlans);
-          updateStoredPlans(updatedPlans);
-          
-          if (id === currentPlanId) {
-              setLessonPlan(null);
-              setCurrentPlanId(null);
-              setCurrentRequest(null);
-              setChatHistory([]);
-          }
-      }
+    setLessonPlan(plan.parts);
+    setCurrentRequest(plan.request);
+    setCurrentPlanId(plan.id);
+    setChatHistory([]);
+    setError(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+
+  const handleDeletePlan = (id: number) => {
+    if (!window.confirm("Bạn có chắc muốn xoá giáo án này?")) return;
+
+    const updatedPlans = savedPlans.filter(p => p.id !== id);
+    setSavedPlans(updatedPlans);
+    updateStoredPlans(updatedPlans);
+
+    if (id === currentPlanId) {
+      setLessonPlan(null);
+      setCurrentPlanId(null);
+      setCurrentRequest(null);
+      setChatHistory([]);
+    }
+  };
+
+
+  // ===========================
+  // Giao diện chính
+  // ===========================
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-teal-50 via-cyan-50 to-sky-100">
-      
-      {/* ⭐ THÊM LOGOUT */}
-      <Header 
-        onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)} 
+
+      <Header
+        onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
         onLogout={handleLogout}
       />
 
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
+
           <div className="lg:col-span-1 space-y-8">
+
             <div className="relative">
               {isLoading && <LoadingSpinner />}
-              <LessonPlanForm 
-                onSubmit={handleGenerateLessonPlan} 
+              <LessonPlanForm
+                onSubmit={handleGenerateLessonPlan}
                 isLoading={isLoading}
                 initialData={currentRequest}
               />
             </div>
-             {savedPlans.length > 0 && (
-              <SavedPlans 
-                  plans={savedPlans} 
-                  onLoad={handleLoadPlan} 
-                  onDelete={handleDeletePlan}
-                  currentPlanId={currentPlanId}
+
+            {savedPlans.length > 0 && (
+              <SavedPlans
+                plans={savedPlans}
+                onLoad={handleLoadPlan}
+                onDelete={handleDeletePlan}
+                currentPlanId={currentPlanId}
               />
             )}
           </div>
+
           <div className="lg:col-span-2 h-full">
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4" role="alert">
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
                 <strong className="font-bold">Lỗi! </strong>
-                <span className="block sm:inline">{error}</span>
+                <span>{error}</span>
               </div>
             )}
-            <LessonPlanDisplay 
+
+            <LessonPlanDisplay
               lessonPlanParts={lessonPlan}
               chatHistory={chatHistory}
               onSendMessage={handleSendMessage}
@@ -285,10 +344,13 @@ const App: React.FC = () => {
               format={currentRequest?.format || 'no-columns'}
             />
           </div>
+
         </div>
       </main>
+
       <Footer />
-      <ApiKeyModal 
+
+      <ApiKeyModal
         isOpen={isApiKeyModalOpen}
         onClose={() => setIsApiKeyModalOpen(false)}
         onSave={handleSaveApiKey}
@@ -298,5 +360,6 @@ const App: React.FC = () => {
     </div>
   );
 };
+
 
 export default App;
