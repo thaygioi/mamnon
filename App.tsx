@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { LessonPlanForm } from './components/LessonPlanForm';
 import { LessonPlanDisplay } from './components/LessonPlanDisplay';
@@ -6,6 +5,8 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
 import { ApiKeyModal } from './components/ApiKeyModal';
+import Login from './components/Login';   // ⭐ THÊM LOGIN
+
 import { LessonPlanRequest, LessonPlanParts, ChatMessage, SavedLessonPlan } from './types';
 import { generateLearningActivity, generateOutdoorActivity, generateCornerActivity, refineLessonPlan } from './services/geminiService';
 
@@ -48,6 +49,26 @@ const SavedPlans: React.FC<{
 
 
 const App: React.FC = () => {
+  // ⭐ STATE LOGIN
+  const [loggedIn, setLoggedIn] = useState<boolean>(
+    localStorage.getItem("loggedIn") === "yes"
+  );
+
+  // ⭐ Nếu chưa login → hiện Login screen
+  if (!loggedIn) {
+    return <Login onLoginSuccess={() => setLoggedIn(true)} />;
+  }
+
+  // ⭐ Logout
+  const handleLogout = () => {
+    localStorage.removeItem("loggedIn");
+    setLoggedIn(false);
+  };
+
+  // ===========================
+  // ========== APP =============
+  // ===========================
+
   const [lessonPlan, setLessonPlan] = useState<LessonPlanParts | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +88,7 @@ const App: React.FC = () => {
         if (storedKey) {
             setApiKey(storedKey);
         } else {
-            setIsApiKeyModalOpen(true); // Open modal on first load if no key
+            setIsApiKeyModalOpen(true);
         }
 
         const storedPlans = localStorage.getItem('lessonPlans');
@@ -109,13 +130,11 @@ const App: React.FC = () => {
     setError(null);
     setLessonPlan(null);
     setChatHistory([]);
-    setCurrentRequest(request); // Set request info early for the form
+    setCurrentRequest(request);
 
     try {
-      // Step 1: Generate the main learning activity
       const learningActivity = await generateLearningActivity(request, apiKey);
       
-      // Show the first part immediately with placeholders for the rest
       const initialParts: LessonPlanParts = {
         learningActivity,
         outdoorActivity: 'AI đang soạn thảo hoạt động này...',
@@ -123,7 +142,6 @@ const App: React.FC = () => {
       };
       setLessonPlan(initialParts);
       
-      // Step 2: Generate supplementary activities in parallel using the main activity as context
       const [outdoorActivity, cornerActivity] = await Promise.all([
         generateOutdoorActivity(request, learningActivity, apiKey),
         generateCornerActivity(request, learningActivity, apiKey),
@@ -135,7 +153,6 @@ const App: React.FC = () => {
         cornerActivity,
       };
 
-      // Update the view with all parts and save the complete plan
       setLessonPlan(finalParts);
 
       const newPlan: SavedLessonPlan = {
@@ -224,10 +241,15 @@ const App: React.FC = () => {
       }
   };
 
-
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-teal-50 via-cyan-50 to-sky-100">
-      <Header onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)} />
+      
+      {/* ⭐ THÊM LOGOUT */}
+      <Header 
+        onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)} 
+        onLogout={handleLogout}
+      />
+
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
           <div className="lg:col-span-1 space-y-8">
